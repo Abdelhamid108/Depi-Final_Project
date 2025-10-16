@@ -1,0 +1,58 @@
+{
+  "name": "amazona",
+  "version": "1.0.7",
+  "description": "Demo : https://amazonaapp.herokuapp.com/",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "aws-sdk": "^2.1600.0",
+    "body-parser": "^1.20.3",
+    "clean": "^4.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "eslint-plugin-react": "^7.19.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.15.2",
+    "multer": "^2.0.1",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.27.4",
+    "@babel/node": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "axios": "^1.9.0",
+    "eslint": "^9.37.0",
+    "eslint-config-airbnb": "^18.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react-hooks": "^2.5.1",
+    "js-cookie": "^3.0.5",
+    "nodemon": "^3.1.10"
+  },
+  "scripts": {
+    "start": "nodemon --watch backend --exec babel-node backend/server.js",
+    "prod": "node dist/server.js",
+    "dev": "nodemon --watch . --exec babel-node server.js",
+    "build": "rm -rf dist && babel . -d dist --ignore node_modules,uploads",
+    "seed": "babel-node seed-products.js",
+    "seed-prod": "node dist/seed-products.js",
+    "init-prod": "npm run seed-prod && npm run prod",
+    "heroku-postbuild": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/basir/amazona.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/basir/amazona/issues"
+  },
+  "homepage": "https://github.com/basir/amazona#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
