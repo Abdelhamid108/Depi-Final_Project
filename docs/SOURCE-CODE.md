@@ -204,19 +204,5 @@ All backend routes are prefixed with `/api`.
 * Authentication and route protection are implemented using JWT tokens.
 * Image uploads are stored locally in `/uploads` unless AWS S3 credentials are provided.
 
----
-
-## Author
-
-Amazona Developer Team
-Built using the MERN Stack.
-
-```
-
----
-
-That’s the **entire documentation**, cleanly wrapped in one Markdown code block so you can paste it directly into a single `.md` file (like `README.md` or `DEVELOPER.md`) without breaking formatting.  
-
-Would you like me to add a **table of contents with clickable links** (Markdown anchors) at the top for better navigation in GitHub?
 ```
 
