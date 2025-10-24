@@ -27,13 +27,13 @@ variable "private_app_subnet_cidr" {
 variable "master_instance_type" {
   description = "Instance type for the Kubernetes Master node."
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "worker_instance_type" {
   description = "Instance type for the Kubernetes Worker nodes."
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "worker_count" {
@@ -51,13 +51,13 @@ variable "ssh_key_name" {
 variable "ecr_repo_name_frontend" {
   description = "Name for the frontend ECR repository."
   type        = string
-  default     = "my-app-frontend"
+  default     = "depi-app-frontend"
 }
 
 variable "ecr_repo_name_backend" {
   description = "Name for the backend ECR repository."
   type        = string
-  default     = "my-app-backend"
+  default     = "depi-app-backend"
 }
 
 variable "logs_s3_bucket_name" {
