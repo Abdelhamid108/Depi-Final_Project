@@ -1,6 +1,6 @@
 ---
  - name: install docker in all nodes 
    hosts: all
-   gather_facts: yes
+   gather_facts: no
    roles:
      - Docker_installation
