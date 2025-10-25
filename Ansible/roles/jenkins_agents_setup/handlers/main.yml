@@ -1,0 +1,5 @@
+- name: start_sshd
+  service:
+    name: sshd
+    state: started
+    enabled: yes

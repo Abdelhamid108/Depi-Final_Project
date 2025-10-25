@@ -1,0 +1,6 @@
+---
+- name: setup a jenkins agent on instance
+  hosts: workers
+  gather_facts: no
+  roles:
+    - jenkins_agents_setup

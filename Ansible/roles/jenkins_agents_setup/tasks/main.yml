@@ -1,0 +1,58 @@
+- name: Ensure the necessary packages are present
+  ansible.builtin.package:
+    name:
+      - wget
+      - apt-transport-https
+      - gpg
+      - openssh-server
+      - fontconfig
+    update_cache: yes
+    state: present
+  notify: start_sshd
+
+- name: Download the Eclipse Adoptium GPG key
+  ansible.builtin.get_url:
+    url: https://packages.adoptium.net/artifactory/api/gpg/key/public
+    file: /etc/apt/keyrings/adoptium
+    state: present
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Add Adoptium repo
+  apt_repository:
+    repo: "deb https://packages.adoptium.net/artifactory/deb  {{ ansible_distribution_release }} main"
+    state: present
+    filename: adoptium
+    update_cache: yes
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+- name: Add multiple repositories into the same file (
+  ansible.builtin.yum_repository:
+    name: Adoptium
+    description: Adoptium YUM repo
+    baseurl: "https://packages.adoptium.net/artifactory/rpm/{{ ansible_distribution | lower }}/$releasever/$basearch"
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: "https://packages.adoptium.net/artifactory/api/gpg/key/public"
+  when: ansible_os_family == "RedHat"
+
+
+- name: install java(jdk)
+  ansible.builtin.package:
+    name:
+      - temurin-21-jdk
+    state: present
+  notify: start_sshd
+
+- name: ensure user jenkins exist
+  user:
+    name: jenkins
+    state: present
+    shell: /bin/bash
+    create_home: yes
+
+
+- name: Set authorized key taken from file
+  ansible.posix.authorized_key:
+    user: jenkins
+    state: present
+    key: "{{ lookup('file', '../files/jenkins.pub') }}"

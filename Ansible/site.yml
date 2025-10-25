@@ -1,0 +1,7 @@
+---
+ - name: setup agents
+   hosts: all
+   gather_facts: yes
+
+ -  import_playbook: ./playbooks/docker_installation.yml
+ -  import_playbook: ./playbooks/jenkins_agents_setup.yml
