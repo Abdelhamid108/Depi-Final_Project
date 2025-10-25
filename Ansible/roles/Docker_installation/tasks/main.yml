@@ -57,13 +57,24 @@
   ansible.builtin.yum_repository:
     name: docker-ce-stable
     state: present
-    baseurl: https://download.docker.com/linux/rhel/docker-ce.repo
+    #baseurl: https://download.docker.com/linux/rhel/docker-ce.repo
+    #baseurl: https://download.docker.com/linux/rhel/$releasever/$basearch/stable/
+    baseurl: https://download.docker.com/linux/rhel/9/$basearch/stable/
+    gpgkey: https://download.docker.com/linux/rhel/gpg
     enabled: yes
     gpgcheck: yes
-    describtion: Docker CE Stable Repo
+    description: Docker CE repo stable
   when:
     - ansible_os_family == "RedHat"
     - docker_check.rc != 0
+
+- name: Clean and rebuild DNF/YUM metadata cache
+  ansible.builtin.dnf:
+    name: '*' 
+    state: latest 
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+  become: yes
 
 - name: install docker engine
   ansible.builtin.package:
