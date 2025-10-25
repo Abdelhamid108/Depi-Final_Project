@@ -1,0 +1,4 @@
+# inventory/group_vars/workers.yml
+---
+# SSH arguments specifically for workers to use the master as a jump host
+ansible_ssh_common_args: "-o ProxyJump={{ ansible_user }}@{{ hostvars['master-node']['ansible_host'] }}"
