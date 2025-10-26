@@ -12,6 +12,11 @@ resource "aws_instance" "k8s_master" {
   vpc_security_group_ids = [var.master_sg_id]
   key_name               = aws_key_pair.k8s_key.key_name
   tags                   = { Name = "k8s-master" }
+  
+  # detremine ebs size
+  root_block_device {
+    volume_size = var.master_root_volume_size
+  }
 }
 
 resource "aws_instance" "k8s_worker" {
@@ -22,4 +27,10 @@ resource "aws_instance" "k8s_worker" {
   vpc_security_group_ids = [var.worker_sg_id]
   key_name               = aws_key_pair.k8s_key.key_name
   tags                   = { Name = "k8s-worker-${count.index + 1}" }
+
+  # detremine ebs size
+  root_block_device {
+    volume_size = var.master_root_volume_size
+  }
+
 }

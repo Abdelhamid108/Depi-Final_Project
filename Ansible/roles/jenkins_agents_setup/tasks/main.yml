@@ -41,16 +41,17 @@
     state: present
   notify: start_sshd
 
-#- name: ensure user jenkins exist
-#  user:
-#    name: jenkins
-#    state: present
-#    shell: /bin/bash
-#    create_home: yes
+- name: ensure user jenkins exist
+  user:
+    name: jenkins
+    state: present
+    shell: /bin/bash
+    create_home: yes
+  when: inventory_hostname in groups['workers']
 
-
-#- name: Set authorized key taken from file
-#  ansible.posix.authorized_key:
-#    user: jenkins
-#    state: present
-#    key: "{{ lookup('file', '../files/jenkins.pub') }}"
+- name: Set authorized key taken from file
+  ansible.posix.authorized_key:
+    user: jenkins
+    state: present
+    key: "{{ lookup('file', '../files/depi_jenkins_rsa.pub') }}"
+  when: inventory_hostname in groups['workers'] 
