@@ -1,0 +1,6 @@
+---
+- name: setup jenkins master 
+  hosts: masters
+  gather_facts: no
+  roles:
+    - jenkins_master_setup
