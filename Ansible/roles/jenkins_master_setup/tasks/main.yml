@@ -30,8 +30,19 @@
     state: present
   notify: start_enable_jenkins
 
+- name: add jenkins user to docker group
+  user:
+    name: jenkins
+    groups: docker
+    state: present 
+    append: yes
+
 - name: Run jenkins handler now so jenkins intialization setup can proceed
   ansible.builtin.meta: flush_handlers
+
+- name: read admin pwd
+  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: secretpwd
 
 - name: unlock and add admin user
   jenkins_script:
