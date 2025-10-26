@@ -1,4 +1,6 @@
-# variables.tf
+#
+# --- Root variables.tf ---
+# This file declares all input variables for the root module.
 
 variable "aws_region" {
   description = "The AWS region to deploy resources in."
@@ -63,5 +65,5 @@ variable "ecr_repo_name_backend" {
 variable "logs_s3_bucket_name" {
   description = "Name for the S3 bucket to store logs (must be globally unique)."
   type        = string
-  # A default value is not recommended for S3 bucket names
+  # No default, as this must be unique. User must provide this.
 }
