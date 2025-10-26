@@ -2,30 +2,6 @@
 
 # Terraform AWS Infrastructure Documentation
 
-## 📘 Table of Contents
-
-* [1. Project Overview](#1-project-overview)
-* [2. Infrastructure Structure](#2-infrastructure-structure)
-
-  * [VPC](#vpc)
-  * [Subnets](#subnets)
-  * [Networking Components](#networking-components)
-  * [Security Groups](#security-groups)
-  * [EC2 Instances](#ec2-instances)
-  * [ECR (Elastic Container Registry)](#ecr-elastic-container-registry)
-  * [S3 (Simple Storage Service)](#s3-simple-storage-service)
-* [3. File Structure](#3-file-structure)
-* [4. How to Use This Terraform Setup](#4-how-to-use-this-terraform-setup)
-
-  * [Prerequisites](#prerequisites)
-  * [Step 1: Configuration (Optional)](#step-1-configuration-optional)
-  * [Step 2: Initialize Terraform](#step-2-initialize-terraform)
-  * [Step 3: Plan the Deployment](#step-3-plan-the-deployment)
-  * [Step 4: Apply the Configuration](#step-4-apply-the-configuration)
-  * [Step 5: Review Outputs](#step-5-review-outputs)
-  * [Step 6: Destroy the Infrastructure](#step-6-destroy-the-infrastructure)
-
----
 
 ## 1. Project Overview
 
@@ -47,7 +23,7 @@ The infrastructure is modular and maintainable, separating **networking**, **sec
 
 ![Project Infrastructure](https://drive.google.com/uc?id=103VBAeZGVW4RrXHvCI4p2cOpu6au7-V2)
 
-### 🕸️ VPC
+###  VPC
 
 * **CIDR Block:** `10.0.0.0/16`
 * Provides isolated networking for all resources.
@@ -227,7 +203,7 @@ Terraform provisions all AWS resources — including the VPC, EC2s, ECR, and S3 
 
 ---
 
-### 📊 Step 5: Review Outputs
+###  Step 5: Review Outputs
 
 Example output:
 
@@ -264,7 +240,7 @@ Type `yes` to confirm.
 
 ---
 
-## ✅ Summary
+##  Summary
 
 This Terraform setup provides a **complete AWS foundation** for a production-ready Kubernetes cluster — including secure networking, scalable EC2 nodes, and managed registries for CI/CD pipelines.
 
