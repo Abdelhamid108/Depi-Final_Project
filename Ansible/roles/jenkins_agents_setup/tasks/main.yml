@@ -47,6 +47,8 @@
     state: present
     shell: /bin/bash
     create_home: yes
+    groups: docker
+    append: yes
   when: inventory_hostname in groups['workers']
 
 - name: Set authorized key taken from file
