@@ -1,0 +1,51 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    depends_on:
+      mongodb:
+        condition: service_healthy
+   
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/amazona?authSource=admin
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - AWS_REGION=${AWS_REGION:-eu-north-1}
+      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME:-amazona20}
+      - JWT_SECRET=${JWT_SECRET:-somethingsecret}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-sb}
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    ports: 
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=
+
+  mongodb:
+    image: mongo:6
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    
+    volumes:
+      - mongodb_data:/data/db
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval","db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
