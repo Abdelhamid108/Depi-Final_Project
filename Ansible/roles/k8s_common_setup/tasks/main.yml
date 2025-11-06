@@ -1,0 +1,135 @@
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal > 0
+
+- name: Keeps the swap off during reboot
+  ansible.posix.mount:
+    name: swap
+    fstype: swap
+    state: absent
+    
+- name: Create the .conf file to load the modules at bootup
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+        overlay
+        br_netfilter
+
+- name: Load required kernel modules (overlay, br_netfilter)
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: install cri-dockerd
+  block:
+    - name: 1.Download cri-dockerd archive
+      get_url:
+        url: "https://github.com/Mirantis/cri-dockerd/releases/download/v{{cri_dockerd_version}}/cri-dockerd-0.3.21.amd64.tgz"
+        dest: "/tmp/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz"
+        mood: '0644'
+
+    - name: 2.Extract cri-dockerd archive
+      ansible.builtin.unarchive:
+        src: "/tmp/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz"
+        dest: "tmp/"
+        remote_src: yes
+
+    - name: 3.Move cri-dockerd binary to /usr/local/bin
+      copy:
+        src: "/tmp/cri-dockerd/cri-dockerd"
+        dest: "/usr/local/bin/"
+        mood: '0755'
+        remote_src: yes
+        owner: root
+        group: root
+    
+    - name: 4. Download cri-docker.service file
+      get_url:
+        url: "https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service"
+        dest: "/etc/systemd/system/cri-docker.service"
+        mode: '0644'
+      notify: Reload systemd daemon
+    
+    - name: 5. Download cri-docker.socket file
+      get_url:
+        url: "https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket"
+        dest: "/etc/systemd/system/cri-docker.socket"
+        mode: '0644'
+      notify: Reload systemd daemon
+
+    - name: 6. Replace executable path in service file
+      replace:
+        path: "/etc/systemd/system/cri-docker.service"
+        regexp: '/usr/bin/cri-dockerd'
+        replace: '/usr/local/bin/cri-dockerd'
+      notify: Reload systemd daemon
+
+    - name: 7. Enable cri-docker.service && cri-docker.socket 
+      service:
+        name: 
+          - cri-docker.service
+          - cri-docker.socket
+        enabled: true
+        state: started
+
+- name: Install kubelet, kubectl, and kubeadm
+  block:
+    - name: Download The k8s gpg key for Debian based os
+      get_url:
+        url: "https://pkgs.k8s.io/core:/stable:/{{ KUBERNETES_VERSION}}/deb/Release.key"
+        dest: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+      when: ansible_os_family == "Debian"
+    
+    - name: Add the repository to Apt sources
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ KUBERNETES_VERSION}}/deb/ /"
+        filename: kubernetes
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+    
+    - name: Add k8s repository for Redhat based os 
+      yum_repository:
+        name: Kubernetes
+        state: present
+        baseurl: https://pkgs.k8s.io/core:/stable:/{{ KUBERNETES_VERSION}}/rpm/
+        gpgkey: https://pkgs.k8s.io/core:/stable:/{{ KUBERNETES_VERSION}}/rpm/repodata/repomd.xml.key
+        enabled: yes
+        gpgcheck: yes
+        description: Kubernetes repo stable
+        exclude:
+          - kubelet
+          - kubeadm
+          - kubectl
+          - cri-tools
+          - kubernetes-cni
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Kubernetes packages on all OS families
+      ansible.builtin.package:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        disable_excludes: "{{ 'kubernetes' if ansible_os_family == 'RedHat' else omit }}"
+
+- name: Configure Kubelet Node IP
+  block: 
+    - name: Configure Kubelet Node IP (Debian/Ubuntu)
+      lineinfile:
+         path: /etc/default/kubelet # Debian uses this file
+         line: "KUBELET_EXTRA_ARGS=--node-ip={{ ansible_default_ipv4.address }}"
+         create: yes
+      when: ansible_os_family == "Debian"
+    
+    - name: Configure Kubelet Node IP (RedHat)
+      lineinfile:
+        path: /etc/sysconfig/kubelet
+        line: "KUBELET_EXTRA_ARGS=--node-ip={{ ansible_default_ipv4.address }}"
+        create: yes
+      when: ansible_os_family == "RedHat"
