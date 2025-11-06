@@ -1,0 +1,4 @@
+---
+  vars:
+    cri_dockerd_version: "0.3.21"
+    KUBERNETES_VERSION: "v1.34"
