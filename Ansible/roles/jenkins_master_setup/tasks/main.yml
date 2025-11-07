@@ -1,3 +1,5 @@
+---
+# Adds the Jenkins GPG key for Debian-based systems
 - name: add GPG key for jenkins
   ansible.builtin.get_url:
     url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
@@ -5,6 +7,7 @@
     mode: 'a+r'
   when: ansible_distribution in ["Debian", "Ubuntu"]
 
+# Adds the Jenkins apt repository
 - name: add jenkins repo
   apt_repository:
     repo: 'deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/'
@@ -13,6 +16,7 @@
     update_cache: yes
   when: ansible_distribution in ["Debian", "Ubuntu"]
 
+# Adds the Jenkins yum repository for RedHat-based systems
 - name: Add multiple repositories into the same file 
   ansible.builtin.yum_repository:
     name: Jenkins
@@ -23,13 +27,16 @@
     gpgkey: "https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key"
   when: ansible_os_family == "RedHat"
 
+# Installs the Jenkins package
 - name: install jenkins engine
   package:
     name:
       - jenkins
     state: present
-  notify: start_enable_jenkins
+  notify: start_enable_jenkins # Notifies handler to start/enable Jenkins
 
+# Adds the 'jenkins' user to the 'docker' group
+# This is CRITICAL for allowing Jenkins pipelines to run 'docker' commands
 - name: add jenkins user to docker group
   user:
     name: jenkins
@@ -37,13 +44,18 @@
     state: present 
     append: yes
 
+# This task forces all 'notify' handlers to run immediately.
+# We need Jenkins to be *running* for the next tasks to work.
 - name: Run jenkins handler now so jenkins intialization setup can proceed
   ansible.builtin.meta: flush_handlers
 
+# Reads the initial admin password from the master node
 - name: read admin pwd
   shell: cat /var/lib/jenkins/secrets/initialAdminPassword
-  register: secretpwd
+  register: secretpwd # Saves the password into a variable named 'secretpwd'
 
+# This task runs a Groovy script on Jenkins to bypass the setup wizard
+# It creates the 'Jenkins' admin user with the password 'admin'
 - name: unlock and add admin user
   jenkins_script:
     script: |
@@ -58,10 +70,11 @@
           instance.setAuthorizationStrategy(strategy)
           instance.save()
     args:
-      user_pwd: admin
+      user_pwd: admin # This should be changed to use Ansible Vault
     user: admin
-    password: "{{ secretpwd.stdout }}"
+    password: "{{ secretpwd.stdout }}" # Authenticates using the initial password
 
+# Runs another Groovy script to mark the setup wizard as complete
 - name: complete setup wizard
   jenkins_script:
     script: |
@@ -71,8 +84,10 @@
             InstallState.INITIAL_SETUP_COMPLETED.initializeState()
           }
     user: admin
-    password: "{{ secretpwd.stdout }}"
+    password: "{{ secretpwd.stdout }}" # Authenticates using the new password
 
+# Installs all plugins listed in the 'jenkins_plugins' variable
+# (This variable is loaded from roles/jenkins_master_setup/vars/main.yml)
 - name: install plugin
   jenkins_plugin:
     name: "{{ item }}"
@@ -80,8 +95,9 @@
     url_username: admin
     url_password: "{{ secretpwd.stdout }}"
   with_items: "{{ jenkins_plugins }}"
-  notify: restart_jenkins
+  notify: restart_jenkins # Restarts Jenkins after plugins are installed
 
+# This task prints the initial admin password to the console.
 - name: display jenkins intail password 
   debug: 
     msg: |
@@ -89,4 +105,4 @@
        jenkins intial password: {{ secretpwd.stdout }}
        ======================================================
      "
-  when: secretpwd.stdout is defined
+  when: secretpwd.stdout is defined # Only runs if the password was read

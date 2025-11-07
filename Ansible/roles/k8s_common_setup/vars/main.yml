@@ -1,3 +1,8 @@
 ---
+# Variables for the 'k8s_common_setup' role
+
+# Defines the version of cri-dockerd to download and install
 cri_dockerd_version: "0.3.21"
+
+# Defines the Kubernetes version to install
 KUBERNETES_VERSION: "v1.34"

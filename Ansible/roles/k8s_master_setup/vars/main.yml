@@ -1,3 +1,10 @@
 ---
+# Variables for the 'k8s_master_setup' role
+
+# Defines the internal network CIDR for Pods.
+# This is passed to 'kubeadm init'.
 pod_network_cidr: "192.168.0.0/16"
+
+# Defines the dedicated user to create for managing Kubernetes
+# This user will have the admin.conf copied to their home directory.
 k8s_user: k8s_manger

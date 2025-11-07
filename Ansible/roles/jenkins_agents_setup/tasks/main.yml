@@ -1,13 +1,17 @@
+---
+# Installs packages required for Jenkins agents (like SSH server)
 - name: Ensure the necessary packages are present
   ansible.builtin.package:
     name:
       - wget
       - gpg
-      - openssh-server
-      - fontconfig
+      - openssh-server # Needed for Jenkins to SSH into the agent
+      - fontconfig     # Dependency for Java
     update_cache: yes
     state: present
-  notify: start_sshd
+  notify: start_sshd # Notifies handler to start/enable sshd
+
+# -- This block installs Java (JDK 21) --
 
 - name: Download the Eclipse Adoptium GPG key
   ansible.builtin.get_url:
@@ -37,23 +41,29 @@
 - name: install java(jdk)
   ansible.builtin.package:
     name:
-      - temurin-21-jdk
+      - temurin-21-jdk # Installs JDK 21
     state: present
   notify: start_sshd
 
+# -- End of Java Install --
+
+# Creates a 'jenkins' user on the worker nodes
 - name: ensure user jenkins exist
   user:
     name: jenkins
     state: present
     shell: /bin/bash
     create_home: yes
-    groups: docker
+    groups: docker # Adds user to 'docker' group to run docker commands
     append: yes
-  when: inventory_hostname in groups['workers']
+  when: inventory_hostname in groups['workers'] # Only runs on workers
 
+# This copies the PUBLIC key from the Jenkins master (in files/)
+# to the 'jenkins' user's authorized_keys file on the agents.
+# This is what allows the Jenkins master to SSH into the agents.
 - name: Set authorized key taken from file
   ansible.posix.authorized_key:
     user: jenkins
     state: present
     key: "{{ lookup('file', '../files/depi_jenkins_rsa.pub') }}"
-  when: inventory_hostname in groups['workers'] 
+  when: inventory_hostname in groups['workers'] # Only runs on workers

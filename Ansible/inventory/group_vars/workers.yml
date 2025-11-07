@@ -1,4 +1,14 @@
 # inventory/group_vars/workers.yml
 ---
-# SSH arguments specifically for workers to use the master as a jump host
+# This file configures the SSH connection for all hosts in the [workers] group.
+#
+# PROBLEM: The worker nodes are in a private subnet and not reachable from the internet.
+# SOLUTION: Use the master node as a "jump host" or "bastion".
+#
+# 'ansible_ssh_common_args' adds flags to the SSH command.
+# '-o ProxyJump' tells SSH to first connect to 'admin@master_public_ip'
+# and then "jump" from there to the worker's private IP.
+#
+# This method relies on SSH Agent Forwarding, which is why you MUST
+# run 'ssh-add' on your local machine before executing the playbook.
 ansible_ssh_common_args: "-o ProxyJump={{ ansible_user }}@{{ hostvars['master-node']['ansible_host'] }}"

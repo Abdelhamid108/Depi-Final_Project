@@ -1,2 +1,6 @@
 ---
+# This file contains variables that apply ONLY to hosts in the [masters] group.
+
+# This tells Ansible to use this specific private key file when
+# connecting to the master node.
 ansible_ssh_private_key_file: ~/.ssh/DEPI_Project_rsa
