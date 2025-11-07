@@ -1,13 +1,16 @@
-
+---
+# Kubernetes cannot run if swap is enabled.
 - name: Disable swap
   command: swapoff -a
 
+# This ensures swap stays off even after a reboot.
 - name: Keeps the swap off during reboot
   ansible.posix.mount:
     name: swap
     fstype: swap
     state: absent
     
+# This file tells the OS to load required kernel modules on boot.
 - name: Create the .conf file to load the modules at bootup
   copy:
     dest: /etc/modules-load.d/k8s.conf
@@ -15,6 +18,7 @@
         overlay
         br_netfilter
 
+# Loads the kernel modules immediately without a reboot.
 - name: Load required kernel modules (overlay, br_netfilter)
   community.general.modprobe:
     name: "{{ item }}"
@@ -24,6 +28,8 @@
     - overlay
     - br_netfilter
 
+# This block installs 'cri-dockerd', the shim that allows
+# Kubernetes to use Docker as its container runtime.
 - name: install cri-dockerd
   block:
     - name: 1.Download cri-dockerd archive
@@ -36,7 +42,7 @@
       ansible.builtin.unarchive:
         src: "/tmp/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz"
         dest: "/tmp/"
-        remote_src: yes
+        remote_src: yes # Tells Ansible the src file is on the remote machine
 
     - name: 3.Move cri-dockerd binary to /usr/local/bin
       copy:
@@ -47,15 +53,17 @@
         owner: root
         group: root
     
+    # Downloads the systemd service file to manage cri-dockerd
     - name: 4. Download cri-docker.service file
       get_url:
         url: "https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service"
         dest: "/etc/systemd/system/cri-docker.service"
         mode: '0644'
-      notify: 
+      notify: # This tells Ansible to run the handlers (daemon-reload, start socket)
         - Reload systemd daemon
         - Start cri-docker socket
     
+    # Downloads the systemd socket file
     - name: 5. Download cri-docker.socket file
       get_url:
         url: "https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket"
@@ -64,6 +72,8 @@
       notify: 
         - Reload systemd daemon
         - Start cri-docker socket
+        
+    # This task was modified to be more robust (as we discussed)
     - name: 6. Replace executable path in service file
       replace:
         path: "/etc/systemd/system/cri-docker.service"
@@ -76,19 +86,22 @@
     - name: 7. Enable cri-docker.service && cri-docker.socket 
       service:
         name: "{{ item }}" 
-        enabled: true
+        enabled: true # Ensures services start on boot
       loop:
         - cri-docker.service
         - cri-docker.socket
           
+# This block installs the main Kubernetes components
 - name: Install kubelet, kubectl, and kubeadm
   block:
+    # Adds the Kubernetes GPG key for Debian/Ubuntu
     - name: Download The k8s gpg key for Debian based os
       get_url:
         url: "https://pkgs.k8s.io/core:/stable:/{{ KUBERNETES_VERSION}}/deb/Release.key"
         dest: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
       when: ansible_os_family == "Debian"
     
+    # Adds the Kubernetes apt repository for Debian/Ubuntu
     - name: Add the repository to Apt sources
       apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ KUBERNETES_VERSION}}/deb/ /"
@@ -97,6 +110,7 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
     
+    # Adds the Kubernetes yum repository for RedHat/RHEL/Fedora
     - name: Add k8s repository for Redhat based os 
       yum_repository:
         name: Kubernetes
@@ -114,6 +128,7 @@
           - kubernetes-cni
       when: ansible_os_family == "RedHat"
 
+    # Installs the packages using the 'package' module (works for apt/yum)
     - name: Install Kubernetes packages on all OS families
       package:
         name:
@@ -121,8 +136,11 @@
           - kubeadm
           - kubectl
         state: present
+        # This is for RedHat only, to ignore the 'exclude' from the repo definition
         disable_excludes: "{{ 'kubernetes' if ansible_os_family == 'RedHat' else omit }}"
 
+    # "Holding" a package prevents it from being automatically updated
+    # This is critical for Kubernetes, as you must manage upgrades carefully
     - name: Hold Kubernetes packages on Debian family
       ansible.builtin.dpkg_selections:
         name: "{{ item }}"
@@ -131,5 +149,4 @@
         - kubelet
         - kubeadm
         - kubectl
-      when: ansible_os_family == "Debian" 
-
+      when: ansible_os_family == "Debian"

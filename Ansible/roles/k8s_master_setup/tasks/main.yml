@@ -1,17 +1,22 @@
 ---
+# This task pulls all necessary Kubeadm images *before* init.
+# This makes the 'kubeadm init' step faster and more reliable.
 - name: Pull required Kubernetes images in advance
   command: "kubeadm config images pull --cri-socket=unix:///var/run/cri-dockerd.sock"
+  # Creates a marker file to make this task idempotent (only runs once)
   args:
     creates: "/tmp/kubeadm-images-pulled.txt"
   register: pull_images
   changed_when: pull_images.rc == 0
 
+# Creates the marker file used by the previous task
 - name: Create marker file for image pull 
   file:
     path: "/tmp/kubeadm-images-pulled.txt"
     state: touch
   when: pull_images.changed
 
+# This is the main task that bootstraps the Kubernetes control-plane.
 - name: intiate the cluster
   command: |
       kubeadm init \
@@ -21,19 +26,24 @@
       --pod-network-cidr={{ pod_network_cidr }} \
       --node-name={{ inventory_hostname }}  \
       --ignore-preflight-errors Swap
+  # This command is idempotent because it won't run if the admin.conf file already exists
   args:
     creates: /etc/kubernetes/admin.conf
   register: kubeadm_init
   changed_when: "'Your Kubernetes control-plane has initialized successfully' in kubeadm_init.stdout"
 
-- name: Configure kubeconfig for the current user
+# This block sets up a dedicated, non-root user for managing Kubernetes
+# This is a security best practice.
+- name: Configure kubeconfig for the dedicated 'k8s_manager' user
   block:
+    # Creates the 'k8s_manager' user defined in vars/main.yml
     - name: create a user for kubernetes
       user:
         name: "{{ k8s_user }}"
         shell: /bin/bash
         state: present
 
+    # Creates the .kube directory in the new user's home
     - name: create kube config directory
       file:
         path: "/home/{{ k8s_user }}/.kube"
@@ -42,6 +52,7 @@
         group: "{{ k8s_user }}"
         mode: '0755'
     
+    # Copies the admin.conf file so the new user can run kubectl commands
     - name: copy conf files to cuurent use config directory
       copy:
         src: "/etc/kubernetes/admin.conf"
@@ -51,29 +62,35 @@
         group: "{{ k8s_user }}"
         mode: '0644'
 
+# Applies the Calico CNI (Container Network Interface) for pod networking
 - name: Install Calico cni
+  # Uses 'kubectl apply' to install Calico from its official manifest
   command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml"
   args:
-    creates: "/tmp/calico-applied.txt"
+    creates: "/tmp/calico-applied.txt" # Makes the task idempotent
   register: apply_calico
   changed_when: apply_calico.rc == 0
+  # IMPORTANT: Runs this command *as* the 'k8s_manager' user we just created
   become_user: "{{ k8s_user }}"
 
+# Creates the marker file for Calico installation
 - name: create marker file for calico installation result
   file:
     path: "/tmp/calico-applied.txt"
     state: touch
   when: apply_calico.changed
 
+# Generates a new join token for worker nodes
 - name: create a join token
   command: "kubeadm token create --print-join-command"
   register: join_command_raw
-  changed_when: false
+  changed_when: false # This command never changes state, it only reads info
 
+# This task saves the join command as a "fact"
+# 'delegate_to: localhost' stores this variable on your local Ansible machine
+# This allows the 'k8s_worker_setup' role to read it in a later play.
 - name: save the token and pass it to another plays
   set_fact:
     join_command: "{{ join_command_raw.stdout }}"
   delegate_to: localhost
-  delegate_facts: true 
-
- 
+  delegate_facts: true

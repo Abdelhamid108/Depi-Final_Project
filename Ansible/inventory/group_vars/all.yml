@@ -1,9 +1,6 @@
 ---
+# This file contains variables that apply to ALL hosts in the inventory.
 
-ansible_user: admin
-
-
-#ansible_ssh_private_key_file: ~/.ssh/DEPI_Project_rsa
-
-
-#master_ip: 3.239.159.231
+# Sets the default user for Ansible to connect with.
+# This is the 'ubuntu' user created by AWS.
+ansible_user: admin 
