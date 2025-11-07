@@ -1,0 +1,77 @@
+---
+- name: Define calico cidr
+  set_fact:
+    pod_network_cidr: "192.168.0.0/16"
+
+- name: Pull required Kubernetes images in advance
+  command: "kubeadm config images pull --cri-socket=unix:///var/run/cri-dockerd.sock"
+  args:
+    creates: "/tmp/kubeadm-images-pulled.txt"
+  register: pull_images
+  changed_when: pull_images.rc == 0
+
+- name: Create marker file for image pull 
+  file:
+    path: "/tmp/kubeadm-images-pulled.txt"
+    state: touch
+  when: pull_images.changed
+
+- name: intiate the cluster
+  command: |
+      kubeadm init \
+      --cri-socket=unix:///var/run/cri-dockerd.sock \
+      --apiserver-advertise-address={{ ansible_default_ipv4.address }} \
+      --apiserver-cert-extra-sans={{ ansible_default_ipv4.address }} \
+      --pod-network-cidr={{ pod_network_cidr }} \
+      --node-name={{ inventory_hostname }}  \
+      --ignore-preflight-errors Swap
+  args:
+    creates: /etc/kubernetes/admin.conf
+  register: kubeadm_init
+  changed_when: "'Your Kubernetes control-plane has initialized successfully' in kubeadm_init.stdout"
+
+- name: Configure kubeconfig for the current user
+  block:
+    - name: create kube config directory
+      file:
+        path: "/home/{{ ansible_user }}/.kube"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+    
+    - name: copy conf files to cuurent use config directory
+      copy:
+        src: "/etc/kubernetes/admin.conf"
+        dest: "/home/{{ ansible_user }}/.kube/config"
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+- name: Install Calico cni
+  command: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml"
+  args:
+    creates: "/tmp/calico-applied.txt"
+  register: apply_calico
+  changed_when: apply_calico.rc == 0
+  become: false
+
+- name: create marker file for calico installation result
+  file:
+    path: "/tmp/calico-applied.txt"
+    state: touch
+  when: apply_calico.changed
+
+- name: create a join token
+  command: "kubeadm token create --print-join-command"
+  register: join_command_raw
+  changed_when: false
+
+- name: save the token and pass it to another plays
+  set_fact:
+    join_command: "{{ join_command_raw.stdout }}"
+  delegate_to: localhost
+  delegate_facts: true 
+
+ 

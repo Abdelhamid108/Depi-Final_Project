@@ -1,0 +1,12 @@
+---
+- name: 1. Reset worker node (if previously joined)
+  command: |
+     kubeadm reset -f \
+     --cri-socket=unix:///var/run/cri-dockerd.sock
+  ignore_errors: yes
+
+- name: 2. Join worker to the cluster
+  # Pulls the join command fact stored on localhost by the master play
+  command: "{{ hostvars['localhost']['join_command'] }} --cri-socket=unix:///var/run/cri-dockerd.sock --node-name={{ inventory_hostname }}"
+  register: join_status
+  changed_when: "'Node has-joined the cluster' in join_status.stdout"

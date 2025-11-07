@@ -1,6 +1,6 @@
+
 - name: Disable swap
   command: swapoff -a
-  when: ansible_swaptotal > 0
 
 - name: Keeps the swap off during reboot
   ansible.posix.mount:
@@ -28,21 +28,21 @@
   block:
     - name: 1.Download cri-dockerd archive
       get_url:
-        url: "https://github.com/Mirantis/cri-dockerd/releases/download/v{{cri_dockerd_version}}/cri-dockerd-0.3.21.amd64.tgz"
+        url: "https://github.com/Mirantis/cri-dockerd/releases/download/v{{ cri_dockerd_version }}/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz"
         dest: "/tmp/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz"
-        mood: '0644'
+        mode: '0644'
 
     - name: 2.Extract cri-dockerd archive
       ansible.builtin.unarchive:
         src: "/tmp/cri-dockerd-{{ cri_dockerd_version }}.amd64.tgz"
-        dest: "tmp/"
+        dest: "/tmp/"
         remote_src: yes
 
     - name: 3.Move cri-dockerd binary to /usr/local/bin
       copy:
         src: "/tmp/cri-dockerd/cri-dockerd"
         dest: "/usr/local/bin/"
-        mood: '0755'
+        mode: '0755'
         remote_src: yes
         owner: root
         group: root
@@ -52,30 +52,35 @@
         url: "https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service"
         dest: "/etc/systemd/system/cri-docker.service"
         mode: '0644'
-      notify: Reload systemd daemon
+      notify: 
+        - Reload systemd daemon
+        - Start cri-docker socket
     
     - name: 5. Download cri-docker.socket file
       get_url:
         url: "https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket"
         dest: "/etc/systemd/system/cri-docker.socket"
         mode: '0644'
-      notify: Reload systemd daemon
-
+      notify: 
+        - Reload systemd daemon
+        - Start cri-docker socket
     - name: 6. Replace executable path in service file
       replace:
         path: "/etc/systemd/system/cri-docker.service"
         regexp: '/usr/bin/cri-dockerd'
         replace: '/usr/local/bin/cri-dockerd'
-      notify: Reload systemd daemon
+      notify: 
+        - Reload systemd daemon
+        - Start cri-docker socket
 
     - name: 7. Enable cri-docker.service && cri-docker.socket 
       service:
-        name: 
-          - cri-docker.service
-          - cri-docker.socket
+        name: "{{ item }}" 
         enabled: true
-        state: started
-
+      loop:
+        - cri-docker.service
+        - cri-docker.socket
+          
 - name: Install kubelet, kubectl, and kubeadm
   block:
     - name: Download The k8s gpg key for Debian based os
@@ -110,7 +115,7 @@
       when: ansible_os_family == "RedHat"
 
     - name: Install Kubernetes packages on all OS families
-      ansible.builtin.package:
+      package:
         name:
           - kubelet
           - kubeadm
@@ -118,18 +123,13 @@
         state: present
         disable_excludes: "{{ 'kubernetes' if ansible_os_family == 'RedHat' else omit }}"
 
-- name: Configure Kubelet Node IP
-  block: 
-    - name: Configure Kubelet Node IP (Debian/Ubuntu)
-      lineinfile:
-         path: /etc/default/kubelet # Debian uses this file
-         line: "KUBELET_EXTRA_ARGS=--node-ip={{ ansible_default_ipv4.address }}"
-         create: yes
-      when: ansible_os_family == "Debian"
-    
-    - name: Configure Kubelet Node IP (RedHat)
-      lineinfile:
-        path: /etc/sysconfig/kubelet
-        line: "KUBELET_EXTRA_ARGS=--node-ip={{ ansible_default_ipv4.address }}"
-        create: yes
-      when: ansible_os_family == "RedHat"
+    - name: Hold Kubernetes packages on Debian family
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+      when: ansible_os_family == "Debian" 
+
