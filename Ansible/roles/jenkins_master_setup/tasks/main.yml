@@ -79,18 +79,14 @@
     state: latest
     url_username: admin
     url_password: "{{ secretpwd.stdout }}"
-  with_items:
-    - git
-    - pipeline
-    - github
-    - docker-plugin
-    - slack
-    - ssh-agent
-    - credentials-binding
-    - docker-workflow
-    - aws-credentials  # Additional AWS Credentials Plugin
-    - multibranch-scan-webhook-trigger
-    - multibranch-build-strategy-extension
+  with_items: "{{ jenkins_plugins }}"
   notify: restart_jenkins
 
-    
+- name: display jenkins intail password 
+  debug: 
+    msg: |
+     " ======================================================
+       jenkins intial password: {{ secretpwd.stdout }}
+       ======================================================
+     "
+  when: secretpwd.stdout is defined

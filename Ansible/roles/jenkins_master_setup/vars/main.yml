@@ -1,0 +1,14 @@
+---
+# Variables for jenkins_master_setup
+jenkins_plugins:
+  - git
+  - pipeline
+  - github
+  - docker-plugin
+  - slack
+  - ssh-agent
+  - credentials-binding
+  - docker-workflow
+  - aws-credentials
+  - multibranch-scan-webhook-trigger
+  - multibranch-build-strategy-extension

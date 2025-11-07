@@ -1,8 +1,4 @@
 ---
-- name: Define calico cidr
-  set_fact:
-    pod_network_cidr: "192.168.0.0/16"
-
 - name: Pull required Kubernetes images in advance
   command: "kubeadm config images pull --cri-socket=unix:///var/run/cri-dockerd.sock"
   args:
@@ -32,21 +28,27 @@
 
 - name: Configure kubeconfig for the current user
   block:
+    - name: create a user for kubernetes
+      user:
+        name: "{{ k8s_user }}"
+        shell: /bin/bash
+        state: present
+
     - name: create kube config directory
       file:
-        path: "/home/{{ ansible_user }}/.kube"
+        path: "/home/{{ k8s_user }}/.kube"
         state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        owner: "{{ k8s_user }}"
+        group: "{{ k8s_user }}"
         mode: '0755'
     
     - name: copy conf files to cuurent use config directory
       copy:
         src: "/etc/kubernetes/admin.conf"
-        dest: "/home/{{ ansible_user }}/.kube/config"
+        dest: "/home/{{ k8s_user }}/.kube/config"
         remote_src: yes
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        owner: "{{ k8s_user }}"
+        group: "{{ k8s_user }}"
         mode: '0644'
 
 - name: Install Calico cni
@@ -55,7 +57,7 @@
     creates: "/tmp/calico-applied.txt"
   register: apply_calico
   changed_when: apply_calico.rc == 0
-  become: false
+  become_user: "{{ k8s_user }}"
 
 - name: create marker file for calico installation result
   file:
