@@ -1,0 +1,18 @@
+---
+- name: 1. Run common Kubernetes setup on all nodes
+  hosts: all
+  gather_facts: no
+  roles:
+    - k8s_common_setup
+
+- name: intiate the cluster on master node 
+  hosts: masters
+  gather_facts: no
+  roles:
+    - k8s_master_setup
+
+- name: wokers join cluster 
+  hosts: workers
+  gather_facts: no
+  roles:
+    - k8s_worker_setup

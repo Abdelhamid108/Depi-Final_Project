@@ -1,0 +1,10 @@
+---
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+
+- name: Start cri-docker socket
+  service:
+    name: cri-docker.socket
+    state: started
+ 
