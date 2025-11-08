@@ -1,0 +1,6 @@
+---
+# This file contains variables that apply to ALL hosts in the inventory.
+
+# Sets the default user for Ansible to connect with.
+# This is the 'ubuntu' user created by AWS.
+ansible_user: admin 
