@@ -1,13 +1,13 @@
 # Docker Documentation
 
-##1. Overview
+## 1. Overview
 
 This project uses docker to containerize all of application services to be able to use them on different environments.The services containerizedare:
 - **Backend**: Node.js API
 - **Frontend**: React application
 - **Database**: MongoDB
 
-##2. Folder Structure
+## 2. Folder Structure
 Docker-AE/
 ├── Docker-compose.yaml
 │
@@ -20,7 +20,7 @@ Docker-AE/
     ├── nginx.conf
     │ 
 
-##3. Backend Dockerfile 
+## 3. Backend Dockerfile 
 
 **location:** `backend/Dockerfile`
 **Purpose:** Builds and runs the nodejs API
@@ -50,7 +50,7 @@ EXPOSE 5000
 #Start the app
 CMD ["npm", "run", "prod"]
 ```
-##4. Frontend Dockerfile
+## 4. Frontend Dockerfile
 
 **location:** `frontend/Dockerfile`
 **Purpose:** Builds React frontend and serves it with nginx using multi-stage build.
@@ -92,7 +92,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 This is a multi-stage. It builds the frontend into static files which are then send to nginx to serve those files.
 
-##5.Nginx Configuration
+## 5.Nginx Configuration
 
 **location:** `frontend/nginx.conf`
 
@@ -151,7 +151,7 @@ http {
 }
 ```
 
-##6. Docker Compose
+## 6. Docker Compose
 **location:** `/docker-compose.yaml`
 
 ```docker-compose.yaml
@@ -207,12 +207,12 @@ services:
 volumes:
   mongodb_data:
 ```
-###Explanation:
+### Explanation:
 - Dockercompose file contains the mongoDB service 
 - The backend service depends on the mongodb service but only if the service passes the healthcheck.
 - Volumes persist mongodb data.
 
-##7. Running the Application
+## 7. Running the Application
 
 ```
 #Start all services
