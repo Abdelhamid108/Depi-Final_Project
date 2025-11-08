@@ -1,4 +1,6 @@
-# variables.tf
+#
+# --- Root variables.tf ---
+# This file declares all input variables for the root module.
 
 variable "aws_region" {
   description = "The AWS region to deploy resources in."
@@ -42,6 +44,18 @@ variable "worker_count" {
   default     = 2
 }
 
+variable "master_root_volume_size" {
+  description = "Size of the root EBS volume for the master node in GB."
+  type        = number
+  default     = 15
+}
+
+variable "worker_root_volume_size" {
+  description = "Size of the root EBS volume for the worker nodes in GB."
+  type        = number
+  default     = 15
+}
+
 variable "ssh_key_name" {
   description = "The name of the SSH key pair to use for the instances."
   type        = string
@@ -63,5 +77,5 @@ variable "ecr_repo_name_backend" {
 variable "logs_s3_bucket_name" {
   description = "Name for the S3 bucket to store logs (must be globally unique)."
   type        = string
-  # A default value is not recommended for S3 bucket names
+  # No default, as this must be unique. User must provide this.
 }
