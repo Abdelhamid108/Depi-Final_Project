@@ -1,0 +1,67 @@
+# variables.tf
+
+variable "aws_region" {
+  description = "The AWS region to deploy resources in."
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "vpc_cidr" {
+  description = "The CIDR block for the VPC."
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "public_subnet_cidr" {
+  description = "The CIDR block for the public subnet."
+  type        = string
+  default     = "10.0.1.0/24"
+}
+
+variable "private_app_subnet_cidr" {
+  description = "The CIDR block for the private application subnet."
+  type        = string
+  default     = "10.0.2.0/24"
+}
+
+variable "master_instance_type" {
+  description = "Instance type for the Kubernetes Master node."
+  type        = string
+  default     = "t3.small"
+}
+
+variable "worker_instance_type" {
+  description = "Instance type for the Kubernetes Worker nodes."
+  type        = string
+  default     = "t3.small"
+}
+
+variable "worker_count" {
+  description = "Number of Kubernetes Worker nodes."
+  type        = number
+  default     = 2
+}
+
+variable "ssh_key_name" {
+  description = "The name of the SSH key pair to use for the instances."
+  type        = string
+  default     = "k8s-key"
+}
+
+variable "ecr_repo_name_frontend" {
+  description = "Name for the frontend ECR repository."
+  type        = string
+  default     = "depi-app-frontend"
+}
+
+variable "ecr_repo_name_backend" {
+  description = "Name for the backend ECR repository."
+  type        = string
+  default     = "depi-app-backend"
+}
+
+variable "logs_s3_bucket_name" {
+  description = "Name for the S3 bucket to store logs (must be globally unique)."
+  type        = string
+  # A default value is not recommended for S3 bucket names
+}
