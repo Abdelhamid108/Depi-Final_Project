@@ -1,0 +1,11 @@
+---
+# This handler is notified when cri-docker service/socket files are downloaded
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true # Forces systemd to re-read its config files
+
+# This handler starts the socket
+- name: Start cri-docker socket
+  service:
+    name: cri-docker.socket
+    state: started
