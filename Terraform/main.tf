@@ -40,6 +40,8 @@ module "compute" {
   private_app_subnet_id  = module.network.private_app_subnet_id
   master_sg_id           = module.security_groups.master_sg_id
   worker_sg_id           = module.security_groups.worker_sg_id
+  master_root_volume_size = var.master_root_volume_size
+  worker_root_volume_size = var.worker_root_volume_size
 }
 
 # Calls the 'ecr_repos' module
