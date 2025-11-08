@@ -8,6 +8,7 @@ This project uses docker to containerize all of application services to be able 
 - **Database**: MongoDB
 
 ## 2. Folder Structure
+```bash
 Docker-AE/
 ├── Docker-compose.yaml
 │
@@ -19,7 +20,7 @@ Docker-AE/
 │   ├── Dockerfile
     ├── nginx.conf
     │ 
-
+```
 ## 3. Backend Dockerfile 
 
 **location:** `backend/Dockerfile`\
@@ -230,4 +231,4 @@ docker compose logs -f backend
 docker compose logs -f frontend
 ```
 Access the app
-- (http://<VM-IP>:3000)
+- [frontend](http://<VM-IP>:3000)
