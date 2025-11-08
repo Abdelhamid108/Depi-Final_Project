@@ -1,6 +1,4 @@
-Here's your enhanced documentation in Markdown format, with some visual aids for better readability!
 
-```markdown
 # Ansible Automation Documentation: DEPI Final Project
 
 This document provides a detailed overview of the Ansible automation setup for the DEPI Final Project. It explains the structure, configuration, and step-by-step execution process to provision the entire application environment.
