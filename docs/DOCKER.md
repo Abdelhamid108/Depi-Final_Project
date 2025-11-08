@@ -22,7 +22,7 @@ Docker-AE/
 
 ## 3. Backend Dockerfile 
 
-**location:** `backend/Dockerfile`
+**location:** `backend/Dockerfile`\
 **Purpose:** Builds and runs the nodejs API
 
 ```Dockerfile
@@ -52,7 +52,7 @@ CMD ["npm", "run", "prod"]
 ```
 ## 4. Frontend Dockerfile
 
-**location:** `frontend/Dockerfile`
+**location:** `frontend/Dockerfile`\
 **Purpose:** Builds React frontend and serves it with nginx using multi-stage build.
 ```Dockerfile
 #Multi-Stage build 
@@ -230,4 +230,4 @@ docker compose logs -f backend
 docker compose logs -f frontend
 ```
 Access the app
-- http://<VM-IP>:3000
+- (http://<VM-IP>:3000)
