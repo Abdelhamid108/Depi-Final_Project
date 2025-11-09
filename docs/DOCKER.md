@@ -212,7 +212,8 @@ volumes:
 - Dockercompose file contains the mongoDB service 
 - The backend service depends on the mongodb service but only if the service passes the healthcheck.
 - Volumes persist mongodb data.
-## 8. .env-examples
+
+## 7. .env-examples
 **location:** `/.env-examples`
 **Purpose:** This file is a configuration file used to store environment variables for the application.\
 	     It is mainly for storing sensitive data like (API Keys, passwords, and database URLs) so it\ would not be directly in code.
@@ -227,7 +228,8 @@ AWS_BUCKET_NAME=dummy-bucket
 JWT_SECRET=somethingsecret
 ```
 ***All the variables are dummy variables for testing.***
-## 7. Running the Application
+
+## 8. Running the Application
 
 ```
 #Start all services
