@@ -214,9 +214,9 @@ volumes:
 - Volumes persist mongodb data.
 
 ## 7. .env-examples
-**location:** `/.env-examples`
+**location:** `/.env-examples`\
 **Purpose:** This file is a configuration file used to store environment variables for the application.\
-	     It is mainly for storing sensitive data like (API Keys, passwords, and database URLs) so it\ would not be directly in code.
+	     It is mainly for storing sensitive data like (API Keys, passwords, and database URLs) so it would not be directly in code.
 ```.env-examples
 #The first two varibales is for allowing backend to upload files to the S3 bucket 
 AWS_ACCESS_KEY_ID=dummy
