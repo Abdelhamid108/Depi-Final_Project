@@ -12,7 +12,7 @@
 - name: install important needed packages 
   package:
     name: 
-      - curl
+    # - curl
       - vim
       - git
       - acl # Access Control List utilities

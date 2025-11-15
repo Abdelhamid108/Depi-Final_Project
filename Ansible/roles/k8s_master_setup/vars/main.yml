@@ -8,3 +8,9 @@ pod_network_cidr: "192.168.0.0/16"
 # Defines the dedicated user to create for managing Kubernetes
 # This user will have the admin.conf copied to their home directory.
 k8s_user: k8s_manger
+
+# Defines the Kubernetes version to install
+kubernetes_version: "v1.34.0"
+
+# Define the cluster name 
+cluster_name: kubernetes

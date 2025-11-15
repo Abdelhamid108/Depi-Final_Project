@@ -53,7 +53,7 @@ resource "aws_security_group" "k8s_worker_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [var.public_subnet_cidr]
+    cidr_blocks = [var.public_subnet_cidr1]
   }
 
   # Allow all outbound traffic

@@ -21,11 +21,20 @@
   ansible.builtin.yum_repository:
     name: Jenkins
     description: Jenkins YUM repo
-    baseurl: "https://pkg.jenkins.io/redhat-stable/jenkins.repo"
+    baseurl: "https://pkg.jenkins.io/redhat-stable/"
     gpgcheck: yes
     enabled: yes
     gpgkey: "https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key"
   when: ansible_os_family == "RedHat"
+
+# Refreshes the package cache for RedHat
+- name: Clean and rebuild DNF/YUM metadata cache
+  ansible.builtin.dnf:
+    name: '*' 
+    state: latest 
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+  become: yes
 
 # Installs the Jenkins package
 - name: install jenkins engine
@@ -33,6 +42,7 @@
     name:
       - jenkins
     state: present
+    update_cache: yes
   notify: start_enable_jenkins # Notifies handler to start/enable Jenkins
 
 # Adds the 'jenkins' user to the 'docker' group
