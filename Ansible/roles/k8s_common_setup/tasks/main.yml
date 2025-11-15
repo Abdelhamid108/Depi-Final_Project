@@ -137,7 +137,7 @@
           - kubectl
         state: present
         # This is for RedHat only, to ignore the 'exclude' from the repo definition
-        disable_excludes: "{{ 'kubernetes' if ansible_os_family == 'RedHat' else omit }}"
+        disable_excludes: "{{ 'Kubernetes' if ansible_os_family == 'RedHat' else omit }}"
 
     # "Holding" a package prevents it from being automatically updated
     # This is critical for Kubernetes, as you must manage upgrades carefully
@@ -150,3 +150,25 @@
         - kubeadm
         - kubectl
       when: ansible_os_family == "Debian"
+
+- name: Create /etc/systemd/system/kubelet.service.d
+  file:
+    path: /etc/systemd/system/kubelet.service.d
+    state: directory
+
+- name: Add kubelet extra args (AWS external)
+  copy:
+    dest: /etc/systemd/system/kubelet.service.d/20-extra.conf
+    content: |
+        [Service]
+        Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
+    mode: 0644
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Restart kubelet
+  service:
+    name: kubelet
+    state: restarted
+

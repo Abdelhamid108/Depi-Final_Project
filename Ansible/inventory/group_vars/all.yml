@@ -3,4 +3,4 @@
 
 # Sets the default user for Ansible to connect with.
 # This is the 'ubuntu' user created by AWS.
-ansible_user: admin 
+ansible_user: ec2-user
