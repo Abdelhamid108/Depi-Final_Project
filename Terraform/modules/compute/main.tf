@@ -129,7 +129,7 @@ resource "aws_instance" "k8s_master" {
   
    metadata_options {
   http_endpoint               = "enabled"
-  http_tokens                 = "required"
+  http_tokens                 = "optional"
   http_put_response_hop_limit = 2
   }
 
@@ -160,7 +160,7 @@ resource "aws_instance" "k8s_worker" {
   }
   metadata_options {
   http_endpoint               = "enabled"
-  http_tokens                 = "required"
+  http_tokens                 = "optional"
   http_put_response_hop_limit = 2
   }
   iam_instance_profile = aws_iam_instance_profile.worker_profile.name
