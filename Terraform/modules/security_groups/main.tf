@@ -31,7 +31,10 @@ resource "aws_security_group" "k8s_master_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "k8s-master-sg" }
+  tags = { 
+          Name = "k8s-master-sg" 
+          "kubernetes.io/cluster/kubernetes" = "shared"
+          }
 }
 
 # 2. Create the Worker Security Group
@@ -63,7 +66,10 @@ resource "aws_security_group" "k8s_worker_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "k8s-worker-sg" }
+  tags = { 
+           Name = "k8s-worker-sg" 
+          "kubernetes.io/cluster/kubernetes" = "shared"    
+          }
 }
 
 # 3. Create connecting rules separately

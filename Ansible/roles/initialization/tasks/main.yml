@@ -18,3 +18,16 @@
       - acl # Access Control List utilities
     update_cache: yes
     state: present
+
+- name: helm install
+  shell: "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash"
+  args:
+    creates: "/tmp/install-helm.txt"
+  register: helm_installation
+  changed_when: helm_installation.rc == 0
+
+- name:  Create marker file for installing helm
+  file:
+    path: "/tmp/helm_installation"
+    state: touch
+  when: helm_installation.changed
