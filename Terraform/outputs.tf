@@ -24,8 +24,3 @@ output "backend_ecr_repo_url" {
   value       = module.ecr_repos.backend_repo_url
 }
 
-output "logs_s3_bucket_name" {
-  description = "Name of the S3 bucket for logs."
-  # Value is taken from the 'aws_s3_bucket' resource in s3.tf
-  value       = aws_s3_bucket.logs_bucket.bucket
-}

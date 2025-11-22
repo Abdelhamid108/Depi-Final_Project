@@ -26,6 +26,7 @@ module "security_groups" {
   source             = "./modules/security_groups"
   # Uses an output from the 'network' module as an input here
   vpc_id             = module.network.vpc_id
+  vpc_cidr           = var.vpc_cidr
   public_subnet_cidr1 = var.public_subnet_cidr1
 }
 

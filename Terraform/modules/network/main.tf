@@ -73,7 +73,7 @@ resource "aws_subnet" "private_app_subnet1" {
 resource "aws_subnet" "private_app_subnet2" {
   vpc_id            = aws_vpc.k8s_vpc.id
   cidr_block        = var.private_app_subnet_cidr2
-  availability_zone = "${var.aws_region}c"
+  availability_zone = "${var.aws_region}a"
 
   tags = {
     Name                                   = "k8s-private-app-subnet2"

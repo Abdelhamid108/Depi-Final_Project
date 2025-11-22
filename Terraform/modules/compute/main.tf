@@ -68,10 +68,16 @@ resource "aws_iam_role_policy_attachment" "matser_lbc_policy" {
   policy_arn = aws_iam_policy.lbc_policy.arn
 }
 
-resource "aws_iam_role_policy_attachment" "master_ec2_read" {
+resource "aws_iam_role_policy_attachment" "master_ec2_full" {
   role       = aws_iam_role.master_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
+
+resource "aws_iam_role_policy_attachment" "master_ecr_policy" {
+  role       = aws_iam_role.master_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
 
 # ------------------------------------------------------------
 # POLICIES - WORKER
@@ -82,15 +88,16 @@ resource "aws_iam_role_policy_attachment" "worker_ecr_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
-resource "aws_iam_role_policy_attachment" "worker_lbc_policy" {
+ resource "aws_iam_role_policy_attachment" "worker_lbc_policy" {
   role       = aws_iam_role.worker_role.name
   policy_arn = aws_iam_policy.lbc_policy.arn
-}
+} 
 
 resource "aws_iam_role_policy_attachment" "worker_ebs_csi" {
   role       = aws_iam_role.worker_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
+
 resource "aws_iam_role_policy_attachment" "worker_ec2_full" {
   role       = aws_iam_role.worker_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
@@ -132,7 +139,9 @@ resource "aws_instance" "k8s_master" {
   http_tokens                 = "optional"
   http_put_response_hop_limit = 2
   }
-
+ 
+  # to enable communication between pods using the cni networking
+  source_dest_check = false
 
   iam_instance_profile = aws_iam_instance_profile.master_profile.name
 
@@ -163,6 +172,10 @@ resource "aws_instance" "k8s_worker" {
   http_tokens                 = "optional"
   http_put_response_hop_limit = 2
   }
+
+  # to enable communication between pods using the cni networking
+  source_dest_check = false
+
   iam_instance_profile = aws_iam_instance_profile.worker_profile.name
 
   tags = {

@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 #Install dependencies while ignoring peer and engine versions 
-RUN npm install --legacy-peer-deps --igonre-engines
+RUN npm install --legacy-peer-deps --ignore-engines
 
 
 #Copy application files.

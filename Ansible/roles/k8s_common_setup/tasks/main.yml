@@ -1,7 +1,4 @@
 ---
-- name: Set hostname to private DNS (Required for AWS Cloud Provider)
-  shell: hostnamectl set-hostname $(curl -s http://169.254.169.254/latest/meta-data/local-hostname)
-
 # Kubernetes cannot run if swap is enabled.
 - name: Disable swap
   command: swapoff -a
@@ -153,19 +150,25 @@
         - kubeadm
         - kubectl
       when: ansible_os_family == "Debian"
-
-- name: Create /etc/systemd/system/kubelet.service.d
-  file:
-    path: /etc/systemd/system/kubelet.service.d
-    state: directory
-
-- name: Add kubelet extra args (AWS external)
-  copy:
-    dest: /etc/systemd/system/kubelet.service.d/20-extra.conf
-    content: |
-        [Service]
-        Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
-    mode: 0644
+    
+- name: configure nodes to use aws services
+  block: 
+    # get instnace provider id from aws metadata
+    - name: Fetch AWS Instance ID and AZ
+      shell: |
+        echo "aws:///$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)/$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+      register: aws_provider_id
+      changed_when: false
+      
+    - name: Configure Kubelet with External Cloud Provider (The Robust Way)
+      copy:
+       #dest: /etc/default/kubelet
+        dest: /etc/sysconfig/kubelet
+        content: |
+          KUBELET_EXTRA_ARGS=--cloud-provider=external --provider-id={{ aws_provider_id.stdout }}
+        owner: root
+        group: root
+        mode: '0644'
 
 - name: Reload systemd
   command: systemctl daemon-reload

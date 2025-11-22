@@ -86,8 +86,3 @@ variable "ecr_repo_name_backend" {
   default     = "depi-app-backend"
 }
 
-variable "logs_s3_bucket_name" {
-  description = "Name for the S3 bucket to store logs (must be globally unique)."
-  type        = string
-  # No default, as this must be unique. User must provide this.
-}
