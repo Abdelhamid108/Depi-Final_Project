@@ -41,7 +41,7 @@ variable "private_app_subnet_cidr2" {
 variable "master_instance_type" {
   description = "Instance type for the Kubernetes Master node."
   type        = string
-  default     = "t3.small"
+  default     = "c7i-flex.large"
 }
 
 variable "worker_instance_type" {
