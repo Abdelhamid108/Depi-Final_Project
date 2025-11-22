@@ -1,0 +1,48 @@
+
+- name: Add Cloud Controller Manager Helm charts repositoy
+  kubernetes.core.helm_repository:
+    name: aws-cloud-controller-manager
+    repo_url: https://kubernetes.github.io/cloud-provider-aws
+
+- name: Deploy Add Cloud Controller Manager
+  kubernetes.core.helm:
+    name: aws-cloud-controller-manager
+    chart_ref: aws-cloud-controller-manager/aws-cloud-controller-manager
+    release_namespace: kube-system
+    kubeconfig: /etc/kubernetes/admin.conf    # to give acces to setup the cluster intead of doing it as k8s user      
+    values:
+      args:
+        - "--configure-cloud-routes=false"
+        - "--v=2"
+        - "--cloud-provider=aws"  
+        - "--cluster-name=kubernetes"
+
+- name: Add  aws load balancer controller Helm charts repository
+  kubernetes.core.helm_repository:
+    name: eks
+    repo_url: https://aws.github.io/eks-charts
+
+- name: Install AWS Load Balancer Controller
+  kubernetes.core.helm:
+    name: aws-load-balancer-controller
+    chart_ref: eks/aws-load-balancer-controller
+    release_namespace: kube-system
+    kubeconfig: /etc/kubernetes/admin.conf
+    values:
+      clusterName: kubernetes
+      serviceAccount:
+        create: true
+        name: aws-load-balancer-controller
+      enableServiceMutatorWebhook: false
+
+- name: Add aws ebs driver Helm charts repository
+  kubernetes.core.helm_repository:
+    name: aws-ebs-csi-driver
+    repo_url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+
+- name: Deploy aws ebs driver controller 
+  kubernetes.core.helm:
+    name: aws-ebs-csi-driver
+    chart_ref: aws-ebs-csi-driver/aws-ebs-csi-driver
+    release_namespace: kube-system
+    kubeconfig: /etc/kubernetes/admin.conf    # to give acces to setup the cluster intead of doing it as k8s user

@@ -16,8 +16,15 @@
       - vim
       - git
       - acl # Access Control List utilities
+      - python3-pip  
     update_cache: yes
     state: present
+
+- name: Install kubernetes python library (Critical for Ansible k8s modules)
+  pip:
+    name: kubernetes
+    state: present
+    executable: pip3
 
 - name: helm install
   shell: "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash"

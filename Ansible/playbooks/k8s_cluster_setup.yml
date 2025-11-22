@@ -5,7 +5,7 @@
   roles:
     # This role handles tasks common to ALL nodes (master and workers)
     # e.g., disabling swap, installing kubelet, kubeadm, kubectl
-    - k8s_common_setup
+        - k8s_common_setup
 
 - name: 2. intiate the cluster on master node 
   hosts: masters
@@ -13,7 +13,7 @@
   roles:
     # This role runs *only* on the master
     # It runs 'kubeadm init' and generates the join token
-    - k8s_master_setup
+        - k8s_master_setup
 
 - name: 3. wokers join cluster 
   hosts: workers
@@ -22,3 +22,10 @@
     # This role runs *only* on the workers
     # It uses the join token from the master to join the cluster
     - k8s_worker_setup
+
+- name: 4. setup cluster to use aws services
+  hosts: masters
+  gather_facts: no
+  roles:
+    # This role runs *only* on the master
+    - aws_controllers   
