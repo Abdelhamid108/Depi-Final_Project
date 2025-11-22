@@ -137,7 +137,7 @@
           - kubectl
         state: present
         # This is for RedHat only, to ignore the 'exclude' from the repo definition
-        disable_excludes: "{{ 'kubernetes' if ansible_os_family == 'RedHat' else omit }}"
+        disable_excludes: "{{ 'Kubernetes' if ansible_os_family == 'RedHat' else omit }}"
 
     # "Holding" a package prevents it from being automatically updated
     # This is critical for Kubernetes, as you must manage upgrades carefully
@@ -150,3 +150,31 @@
         - kubeadm
         - kubectl
       when: ansible_os_family == "Debian"
+    
+- name: configure nodes to use aws services
+  block: 
+    # get instnace provider id from aws metadata
+    - name: Fetch AWS Instance ID and AZ
+      shell: |
+        echo "aws:///$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)/$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+      register: aws_provider_id
+      changed_when: false
+      
+    - name: Configure Kubelet with External Cloud Provider (The Robust Way)
+      copy:
+       #dest: /etc/default/kubelet
+        dest: /etc/sysconfig/kubelet
+        content: |
+          KUBELET_EXTRA_ARGS=--cloud-provider=external --provider-id={{ aws_provider_id.stdout }}
+        owner: root
+        group: root
+        mode: '0644'
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Restart kubelet
+  service:
+    name: kubelet
+    state: restarted
+

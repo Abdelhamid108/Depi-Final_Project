@@ -1,82 +1,161 @@
-#
-# --- modules/network/main.tf ---
-# This module creates the core networking infrastructure.
-
-# Create the Virtual Private Cloud (VPC)
+########################################
+# VPC
+########################################
 resource "aws_vpc" "k8s_vpc" {
   cidr_block = var.vpc_cidr
-  tags       = { Name = "k8s-vpc" }
+
+  tags = {
+    Name = "k8s-vpc"
+  }
 }
 
-# Create an Internet Gateway (IGW) to allow internet access
+########################################
+# Internet Gateway (for Public Subnet)
+########################################
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.k8s_vpc.id
-  tags   = { Name = "k8s-igw" }
+
+  tags = {
+    Name = "k8s-igw"
+  }
 }
 
-# Create the Public Subnet
+########################################
+# Public Subnet (for ALB)
+########################################
 resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.k8s_vpc.id
-  cidr_block              = var.public_subnet_cidr
-  # Automatically assign public IPs to instances launched here
+  cidr_block              = var.public_subnet_cidr1
   map_public_ip_on_launch = true
   availability_zone       = "${var.aws_region}a"
-  tags                    = { Name = "k8s-public-subnet" }
+
+  tags = {
+    Name                                   = "k8s-public-subnet-1"
+    "kubernetes.io/cluster/kubernetes"     = "shared"
+    "kubernetes.io/role/elb"               = "1"
+  }
 }
 
-# Create the Private Application Subnet
-resource "aws_subnet" "private_app_subnet" {
+########################################
+# SECOND Public Subnet (for ALB)
+########################################
+resource "aws_subnet" "public_subnet2" {
   vpc_id                  = aws_vpc.k8s_vpc.id
-  cidr_block              = var.private_app_subnet_cidr
-  availability_zone       = "${var.aws_region}a"
-  tags                    = { Name = "k8s-private-app-subnet" }
+  cidr_block              = var.public_subnet_cidr2
+  map_public_ip_on_launch = true
+  availability_zone       = "${var.aws_region}b"
+
+  tags = {
+    Name                                   = "k8s-public-subnet-2"
+    "kubernetes.io/cluster/kubernetes"     = "shared"
+    "kubernetes.io/role/elb"               = "1"
+  }
 }
 
-# Create a Route Table for the Public Subnet
+########################################
+# Private Subnet 1 (Worker nodes)
+########################################
+resource "aws_subnet" "private_app_subnet1" {
+  vpc_id            = aws_vpc.k8s_vpc.id
+  cidr_block        = var.private_app_subnet_cidr1
+  availability_zone = "${var.aws_region}b"
+
+  tags = {
+    Name                                   = "k8s-private-app-subnet1"
+    "kubernetes.io/cluster/kubernetes"     = "shared"
+    "kubernetes.io/role/internal-elb"      = "1"
+  }
+}
+
+########################################
+# Private Subnet 2 (Worker nodes)
+########################################
+resource "aws_subnet" "private_app_subnet2" {
+  vpc_id            = aws_vpc.k8s_vpc.id
+  cidr_block        = var.private_app_subnet_cidr2
+  availability_zone = "${var.aws_region}a"
+
+  tags = {
+    Name                                   = "k8s-private-app-subnet2"
+    "kubernetes.io/cluster/kubernetes"     = "shared"
+    "kubernetes.io/role/internal-elb"      = "1"
+  }
+}
+
+########################################
+# Public Route Table (Internet access)
+########################################
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.k8s_vpc.id
-  # Add a route to the internet (0.0.0.0/0) via the Internet Gateway
+
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
-  tags = { Name = "k8s-public-rt" }
+
+  tags = {
+    Name = "k8s-public-rt"
+  }
 }
 
-# Associate the Public Route Table with the Public Subnet
+# Associate Public Subnet to Public RT
 resource "aws_route_table_association" "public_assoc" {
   subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.public_rt.id
 }
-
-# Create an Elastic IP (static IP) for the NAT Gateway
-resource "aws_eip" "nat_eip" {
-  domain   = "vpc"
-  tags   = { Name = "k8s-nat-eip" }
+# Associate Public Subnet 2 with Public Route Table
+resource "aws_route_table_association" "public_assoc2" {
+  subnet_id      = aws_subnet.public_subnet2.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
-# Create a NAT Gateway in the Public Subnet
+
+########################################
+# NAT Gateway (for private subnets)
+########################################
+resource "aws_eip" "nat_eip" {
+  domain = "vpc"
+
+  tags = {
+    Name = "k8s-nat-eip"
+  }
+}
+
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public_subnet.id
-  tags          = { Name = "k8s-nat-gw" }
-  # Ensure the IGW is created before the NAT Gateway
-  depends_on    = [aws_internet_gateway.igw]
+
+  tags = {
+    Name = "k8s-nat-gw"
+  }
+
+  depends_on = [aws_internet_gateway.igw]
 }
 
-# Create a Route Table for the Private Subnet
+########################################
+# Private Route Table (uses NAT)
+########################################
 resource "aws_route_table" "private_app_rt" {
   vpc_id = aws_vpc.k8s_vpc.id
-  # Add a route to the internet (0.0.0.0/0) via the NAT Gateway
+
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
-  tags = { Name = "k8s-private-app-rt" }
+
+  tags = {
+    Name = "k8s-private-app-rt"
+  }
 }
 
-# Associate the Private Route Table with the Private Subnet
-resource "aws_route_table_association" "private_app_assoc" {
-  subnet_id      = aws_subnet.private_app_subnet.id
+# Associate private subnets
+resource "aws_route_table_association" "private_app_assoc1" {
+  subnet_id      = aws_subnet.private_app_subnet1.id
   route_table_id = aws_route_table.private_app_rt.id
 }
+
+resource "aws_route_table_association" "private_app_assoc2" {
+  subnet_id      = aws_subnet.private_app_subnet2.id
+  route_table_id = aws_route_table.private_app_rt.id
+}
+

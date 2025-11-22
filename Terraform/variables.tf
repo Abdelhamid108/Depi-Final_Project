@@ -14,22 +14,34 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "public_subnet_cidr" {
+variable "public_subnet_cidr1" {
   description = "The CIDR block for the public subnet."
   type        = string
   default     = "10.0.1.0/24"
 }
 
-variable "private_app_subnet_cidr" {
-  description = "The CIDR block for the private application subnet."
+variable "public_subnet_cidr2" {
+  description = "The CIDR block for the public subnet."
   type        = string
   default     = "10.0.2.0/24"
+}
+
+variable "private_app_subnet_cidr1" {
+  description = "The CIDR block for the private application subnet."
+  type        = string
+  default     = "10.0.3.0/24"
+}
+
+variable "private_app_subnet_cidr2" {
+  description = "The CIDR block for the private application subnet."
+  type        = string
+  default     = "10.0.4.0/24"
 }
 
 variable "master_instance_type" {
   description = "Instance type for the Kubernetes Master node."
   type        = string
-  default     = "t3.small"
+  default     = "c7i-flex.large"
 }
 
 variable "worker_instance_type" {
@@ -74,8 +86,3 @@ variable "ecr_repo_name_backend" {
   default     = "depi-app-backend"
 }
 
-variable "logs_s3_bucket_name" {
-  description = "Name for the S3 bucket to store logs (must be globally unique)."
-  type        = string
-  # No default, as this must be unique. User must provide this.
-}

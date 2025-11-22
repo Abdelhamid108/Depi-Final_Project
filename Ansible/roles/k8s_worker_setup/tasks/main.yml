@@ -11,7 +11,7 @@
   # This is the magic: it reads the 'join_command' fact that was
   # delegated to 'localhost' by the master setup play.
   # This dynamically provides the token to the worker.
-  command: "{{ hostvars['localhost']['join_command'] }} --cri-socket=unix:///var/run/cri-dockerd.sock --node-name={{ inventory_hostname }}"
+  command: "{{ hostvars['localhost']['join_command'] }} --cri-socket=unix:///var/run/cri-dockerd.sock"
   register: join_status
   # Mark the task as 'changed' only if the output confirms a successful join
   changed_when: "'Node has-joined the cluster' in join_status.stdout"
