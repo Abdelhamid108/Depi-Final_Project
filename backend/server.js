@@ -9,7 +9,7 @@ import productRoute from './routes/productRoute';
 import orderRoute from './routes/orderRoute';
 import uploadRoute from './routes/uploadRoute';
 
-const mongodbUrl = process.env.MONGODB_URI || 'mongodb://localhost:27017/amazona';
+const mongodbUrl = config.MONGODB_URL;
 console.log('→ connecting to MongoDB at:', mongodbUrl);
 mongoose
   .connect(mongodbUrl, {
@@ -28,7 +28,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    
+
     // Allow any origin for development/testing // 
     // In production, you might want to be more restrictive
     return callback(null, true);
