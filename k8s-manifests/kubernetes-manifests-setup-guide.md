@@ -1,4 +1,4 @@
-# í³˜ Amazona Cloud-Native Architecture & Team Guide
+# Amazona Cloud-Native Architecture & Team Guide
 
 **Project:** Amazona E-Commerce Platform
 **Infrastructure:** Self-Managed Kubernetes on AWS
