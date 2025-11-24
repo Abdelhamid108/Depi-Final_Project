@@ -74,6 +74,13 @@ variable "ssh_key_name" {
   default     = "k8s-key"
 }
 
+variable "products_bucket_name" {                                                                                                    
+  description = "The name of the s3 products bucket to use for saving the prdocuts data."                                                     
+  type        = string                                                                                                       
+  default     = "app_bucket"                                                                                                    
+}                                                                                                                            
+
+
 variable "ecr_repo_name_frontend" {
   description = "Name for the frontend ECR repository."
   type        = string

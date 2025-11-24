@@ -51,6 +51,13 @@ module "compute" {
 
 }
 
+# Calls the 's3' module
+module "s3" {
+  source                  = "./modules/s3"
+  # Pass in the desired names for the s3 buckets
+  products_bucket_name   = var.products_bucket_name
+}
+
 # Calls the 'ecr_repos' module
 module "ecr_repos" {
   source                  = "./modules/ecr"

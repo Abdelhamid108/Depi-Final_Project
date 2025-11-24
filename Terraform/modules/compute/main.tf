@@ -78,6 +78,11 @@ resource "aws_iam_role_policy_attachment" "master_ecr_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
+resource "aws_iam_role_policy_attachment" "master_s3_policy" {
+  role       = aws_iam_role.master_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
 
 # ------------------------------------------------------------
 # POLICIES - WORKER
@@ -101,6 +106,11 @@ resource "aws_iam_role_policy_attachment" "worker_ebs_csi" {
 resource "aws_iam_role_policy_attachment" "worker_ec2_full" {
   role       = aws_iam_role.worker_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+} 
+
+resource "aws_iam_role_policy_attachment" "worker_s3_policy" {
+  role       = aws_iam_role.worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 
