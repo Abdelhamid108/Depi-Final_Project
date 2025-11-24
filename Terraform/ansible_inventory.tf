@@ -8,8 +8,9 @@ resource "local_file" "ansible_inventory" {
   content = templatefile("${path.module}/ansible_inventory.tpl", {
     master_public_ip   = module.compute.master_public_ip
     worker_private_ips = module.compute.worker_private_ips
-    backend_ecr_name = module.ecr.backend_repo_url
-    frontend_ecr_name = module.ecr.frontend_repo_url
+    backend_ecr_name = module.ecr_repos.backend_repo_url
+    frontend_ecr_name = module.ecr_repos.frontend_repo_url
+    products_bucket_name = var.products_bucket_name
     
   })
 }

@@ -2,7 +2,7 @@ resource "aws_s3_bucket" "amazona_bucket" {
   bucket = var.products_bucket_name
   tags = {
       Name = "products-s3-bucket"
-      Enivronemt = "Production"
+      Environment = "Production"
   }
 }
 

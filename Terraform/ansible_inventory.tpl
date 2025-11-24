@@ -14,5 +14,6 @@ workers
 [all:vars]
 backend_ecr=${backend_ecr_name}
 frontend_ecr=${frontend_ecr_name}
+products_bucket=${products_bucket_name}
 
 

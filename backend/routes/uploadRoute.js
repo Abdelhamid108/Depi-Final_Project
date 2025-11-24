@@ -7,17 +7,23 @@ import { v4 as uuidv4 } from 'uuid';
 const router = express.Router();
 
 // Configure AWS S3 Client (SDK v3)
-const s3Client = new S3Client({
+const s3Config = {
   region: config.region,
-  credentials: {
+};
+
+// Only add credentials if they are explicitly provided and not dummy values
+if (config.accessKeyId && config.secretAccessKey && config.accessKeyId !== 'dummy') {
+  s3Config.credentials = {
     accessKeyId: config.accessKeyId,
     secretAccessKey: config.secretAccessKey,
-  },
-});
+  };
+}
+
+const s3Client = new S3Client(s3Config);
 
 // Memory storage for S3 uploads (temporary)
 const memoryStorage = multer.memoryStorage();
-const uploadToMemory = multer({ 
+const uploadToMemory = multer({
   storage: memoryStorage,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
@@ -26,7 +32,7 @@ const uploadToMemory = multer({
 router.post('/s3', uploadToMemory.single('image'), async (req, res) => {
   try {
     console.log('S3 upload attempt started...');
-    
+
     if (!req.file) {
       console.error('No file uploaded to S3');
       return res.status(400).send('No file uploaded');
@@ -47,13 +53,13 @@ router.post('/s3', uploadToMemory.single('image'), async (req, res) => {
 
     const command = new PutObjectCommand(uploadParams);
     const result = await s3Client.send(command);
-    
+
     // Construct the public URL for the uploaded file
     const fileUrl = `https://${config.bucketName}.s3.${config.region}.amazonaws.com/${fileName}`;
     console.log('S3 upload successful:', fileUrl);
-    
+
     res.send({ image: fileUrl });
-    
+
   } catch (error) {
     console.error('S3 upload error:', error);
     res.status(500).send('S3 upload failed: ' + error.message);
