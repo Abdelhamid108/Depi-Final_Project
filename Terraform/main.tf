@@ -27,8 +27,6 @@ module "security_groups" {
   # Uses an output from the 'network' module as an input here
   vpc_id             = module.network.vpc_id
   vpc_cidr           = var.vpc_cidr
-  k8s_public_subnet_cidr1 = var.k8s_public_subnet_cidr1
-  jenkins_public_subnet_cidr2 = var.jenkins_public_subnet_cidr2
 }
 
 # Calls the 'compute' module to create EC2 instances
