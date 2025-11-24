@@ -13,12 +13,12 @@ provider "aws" {
 module "network" {
   source                  = "./modules/network"
   # Pass variables to the module
-  vpc_cidr                = var.vpc_cidr
-  public_subnet_cidr1      = var.public_subnet_cidr1
-  public_subnet_cidr2      = var.public_subnet_cidr2
-  private_app_subnet_cidr1 = var.private_app_subnet_cidr1
-  private_app_subnet_cidr2 = var.private_app_subnet_cidr2
-  aws_region              = var.aws_region
+  vpc_cidr                         = var.vpc_cidr
+  k8s_public_subnet_cidr1          = var.public_subnet_cidr1
+  jenkins_public_subnet_cidr2      = var.public_subnet_cidr2
+  k8s_private_app_subnet_cidr1     = var.private_app_subnet_cidr1
+  k8s_private_app_subnet_cidr2     = var.private_app_subnet_cidr2
+  aws_region                       = var.aws_region
 }
 
 # Calls the 'security_groups' module
@@ -27,26 +27,32 @@ module "security_groups" {
   # Uses an output from the 'network' module as an input here
   vpc_id             = module.network.vpc_id
   vpc_cidr           = var.vpc_cidr
-  public_subnet_cidr1 = var.public_subnet_cidr1
+  k8s_public_subnet_cidr1 = var.k8s_public_subnet_cidr1
+  jenkins_public_subnet_cidr2 = var.jenkins_public_subnet_cidr2
 }
 
 # Calls the 'compute' module to create EC2 instances
 module "compute" {
   source                 = "./modules/compute"
   # Pass in instance types and counts
-  master_instance_type   = var.master_instance_type
-  worker_instance_type   = var.worker_instance_type
-  worker_count           = var.worker_count
-  ssh_key_name           = var.ssh_key_name
+  jenkins_master_instance_type     = var.jenkins_master_instance_type
+  k8s_master_instance_type         = var.k8s_master_instance_type
+  k8s_worker_instance_type         = var.k8s_worker_instance_type
+  k8s_worker_count                 = var.k8s_worker_count
+  ssh_key_name                     = var.ssh_key_name
   # Pass in subnet and security group IDs from other modules
-  public_subnet_id1       = module.network.public_subnet_id1
-  master_sg_id           = module.security_groups.master_sg_id
-  worker_sg_id           = module.security_groups.worker_sg_id
-  master_root_volume_size = var.master_root_volume_size
-  worker_root_volume_size = var.worker_root_volume_size
+  k8s_public_subnet_id1            = module.network.k8s_public_subnet_id1
+  jenkins_public_subnet_id2        = module.network.jenkins_public_subnet_id2
+  jenkins_master_sg_id             = module.security_groups.jenkins_sg_id
+  k8s_master_sg_id                 = module.security_groups.k8s_master_sg_id
+  k8_s_worker_sg_id                = module.security_groups.k8s_worker_sg_id
+  k8s_master_root_volume_size      = var.k8s_master_root_volume_size
+  k8s_worker_root_volume_size      = var.k8s_worker_root_volume_size
+  jenkins_master_root_volume_size  = var.jenkins_master_root_volume_size
+
   private_app_subnet_ids = [
-  module.network.private_app_subnet_id1,
-  module.network.private_app_subnet_id2
+  module.network.k8s_private_app_subnet_id1,
+  module.network.k8s_private_app_subnet_id2
   ]
 
 }

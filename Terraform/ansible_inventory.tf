@@ -6,8 +6,9 @@ resource "local_file" "ansible_inventory" {
   filename = "../Ansible/inventory/hosts.ini"
 
   content = templatefile("${path.module}/ansible_inventory.tpl", {
-    master_public_ip   = module.compute.master_public_ip
-    worker_private_ips = module.compute.worker_private_ips
+    k8s_master_public_ip   = module.compute.k8s_master_public_ip
+    k8s_worker_private_ips = module.compute.k8s_worker_private_ips
+    jenkins_master_public_ip = module.compute.jenkins_master_public_ip
     backend_ecr_name = module.ecr_repos.backend_repo_url
     frontend_ecr_name = module.ecr_repos.frontend_repo_url
     products_bucket_name = var.products_bucket_name
