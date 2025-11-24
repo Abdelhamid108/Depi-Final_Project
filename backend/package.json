@@ -5,7 +5,6 @@
   "main": "index.js",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",
-    "aws-sdk": "^2.1600.0",
     "body-parser": "^1.20.3",
     "clean": "^4.0.2",
     "cors": "^2.8.5",
