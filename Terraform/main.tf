@@ -14,10 +14,10 @@ module "network" {
   source                  = "./modules/network"
   # Pass variables to the module
   vpc_cidr                         = var.vpc_cidr
-  k8s_public_subnet_cidr1          = var.public_subnet_cidr1
-  jenkins_public_subnet_cidr2      = var.public_subnet_cidr2
-  k8s_private_app_subnet_cidr1     = var.private_app_subnet_cidr1
-  k8s_private_app_subnet_cidr2     = var.private_app_subnet_cidr2
+  k8s_public_subnet_cidr1          = var.k8s_public_subnet_cidr1
+  jenkins_public_subnet_cidr2      = var.jenkins_public_subnet_cidr2
+  k8s_private_app_subnet_cidr1     = var.k8s_private_app_subnet_cidr1
+  k8s_private_app_subnet_cidr2     = var.k8s_private_app_subnet_cidr2
   aws_region                       = var.aws_region
 }
 
@@ -35,7 +35,7 @@ module "security_groups" {
 module "compute" {
   source                 = "./modules/compute"
   # Pass in instance types and counts
-  jenkins_master_instance_type     = var.jenkins_master_instance_type
+  jenkins_master_instance_type     = var.jenkins_instance_type
   k8s_master_instance_type         = var.k8s_master_instance_type
   k8s_worker_instance_type         = var.k8s_worker_instance_type
   k8s_worker_count                 = var.k8s_worker_count
@@ -48,7 +48,7 @@ module "compute" {
   k8_s_worker_sg_id                = module.security_groups.k8s_worker_sg_id
   k8s_master_root_volume_size      = var.k8s_master_root_volume_size
   k8s_worker_root_volume_size      = var.k8s_worker_root_volume_size
-  jenkins_master_root_volume_size  = var.jenkins_master_root_volume_size
+  jenkins_master_root_volume_size  = var.jenkins_root_volume_size
 
   private_app_subnet_ids = [
   module.network.k8s_private_app_subnet_id1,
