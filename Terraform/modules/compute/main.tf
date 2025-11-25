@@ -257,7 +257,7 @@ resource "aws_instance" "jenkins_master" {
   # to enable communication between pods using the cni networking
   source_dest_check = false
 
-  iam_instance_profile = aws_iam_instance_profile.jenkins_master_profile.name
+  iam_instance_profile = aws_iam_instance_profile.jenkins_master_instance_profile.name
 
   tags = {
     Name = "jenkins-control-plane"

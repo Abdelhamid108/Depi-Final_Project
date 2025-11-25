@@ -43,7 +43,7 @@ module "compute" {
   jenkins_public_subnet_id2        = module.network.jenkins_public_subnet_id2
   jenkins_master_sg_id             = module.security_groups.jenkins_sg_id
   k8s_master_sg_id                 = module.security_groups.k8s_master_sg_id
-  k8_s_worker_sg_id                = module.security_groups.k8s_worker_sg_id
+  k8s_worker_sg_id                = module.security_groups.k8s_worker_sg_id
   k8s_master_root_volume_size      = var.k8s_master_root_volume_size
   k8s_worker_root_volume_size      = var.k8s_worker_root_volume_size
   jenkins_master_root_volume_size  = var.jenkins_root_volume_size

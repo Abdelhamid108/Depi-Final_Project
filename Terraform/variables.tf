@@ -44,6 +44,7 @@ variable "k8s_master_instance_type" {
   default     = "c7i-flex.large"
 }
 
+
 variable "k8s_worker_instance_type" {
   description = "Instance type for the Kubernetes Worker nodes."
   type        = string
@@ -89,7 +90,7 @@ variable "ssh_key_name" {
 variable "products_bucket_name" {                                                                                                    
   description = "The name of the s3 products bucket to use for saving the prdocuts data."                                                     
   type        = string                                                                                                       
-  default     = "app_bucket"                                                                                                    
+  default     = "depi-products-bucket"                                                                                                    
 }                                                                                                                            
 
 

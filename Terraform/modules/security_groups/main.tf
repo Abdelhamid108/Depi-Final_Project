@@ -141,6 +141,19 @@ resource "aws_security_group_rule" "k8s_worker_nodeports" {
   description       = "Allow external Load Balancers to access NodePorts"
 }
 
+# Allow jenkins master  to access k8s_workers
+resource "aws_security_group_rule" "jenkins_worker_ssh" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.k8s_worker_sg.id
+  source_security_group_id = aws_security_group.jenkins_master_sg.id
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  description              = "Allow external Jenkins Master to connect to k8s_workers using ssh"
+}
+
+
+
 # ==========================================
 # 5. Jenkins Master Ingress Rules
 # ==========================================

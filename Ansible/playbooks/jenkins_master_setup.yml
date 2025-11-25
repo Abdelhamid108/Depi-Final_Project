@@ -2,7 +2,7 @@
 # This playbook installs and configures the Jenkins primary instance.
 - name: setup jenkins master 
   # It targets *only* the hosts in the [masters] group.
-  hosts: masters
+  hosts: jenkins_masters
   gather_facts: no
   roles:
     # It executes the tasks defined in the 'jenkins_master_setup' role.
