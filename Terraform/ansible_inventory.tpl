@@ -14,9 +14,5 @@ worker-node-${i+1}    ansible_host=${ip}
 k8s_masters
 k8s_workers
 
-[all:vars]
-backend_ecr=${backend_ecr_name}
-frontend_ecr=${frontend_ecr_name}
-products_bucket=${products_bucket_name}
 
 

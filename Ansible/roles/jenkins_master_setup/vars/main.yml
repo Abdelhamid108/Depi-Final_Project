@@ -5,7 +5,7 @@
 # by the 'install plugin' task in the role.
 jenkins_plugins:
   - git
-  - pipeline
+  - workflow-aggregator
   - github
   - docker-plugin
   - slack

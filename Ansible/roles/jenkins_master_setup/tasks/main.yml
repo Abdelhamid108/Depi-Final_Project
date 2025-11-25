@@ -107,12 +107,42 @@
   with_items: "{{ jenkins_plugins }}"
   notify: restart_jenkins # Restarts Jenkins after plugins are installed
 
-# This task prints the initial admin password to the console.
-- name: display jenkins intail password 
-  debug: 
-    msg: |
-     " ======================================================
-       jenkins intial password: {{ secretpwd.stdout }}
-       ======================================================
-     "
-  when: secretpwd.stdout is defined # Only runs if the password was read
+- name: Restart Jenkins to load new plugins
+  ansible.builtin.meta: flush_handlers
+
+- name: Install python3-jenkins library (required for modules)
+  pip:
+    name: python-jenkins
+    state: present
+
+- name: Generate Jenkins API Token
+  community.general.jenkins_credential:
+    name: "ansible-token"
+    type: token
+    jenkins_user: Jenkins
+    jenkins_password: admin
+    url: http://localhost:8080
+      B
+  register: jenkins_token_result
+
+- name: Copy SSH Key to Temp File
+  copy:
+    content: "{{ lookup('file', '~/.ssh/jenkins_key') }}"
+    dest: /tmp/jenkins_agent_key
+    mode: '0600'    
+
+- name: Create SSH Key Credential
+  community.general.jenkins_credential:
+    id: jenkins-ssh-key
+    type: ssh_key
+    username: jenkins
+    private_key_path: /tmp/jenkins_agent_key
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+
+- name: Remove Temp SSH Key File
+  file:
+    path: "/tmp/jenkins_agent_key"
+    state: absent      

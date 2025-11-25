@@ -99,6 +99,10 @@ resource "aws_iam_role_policy_attachment" "k8s_master_s3_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "k8s_master_ssm_policy" {
+  role       = aws_iam_role.k8s_master_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
 
 # ------------------------------------------------------------
 # POLICIES - WORKER
@@ -106,6 +110,7 @@ resource "aws_iam_role_policy_attachment" "k8s_master_s3_policy" {
 
 resource "aws_iam_role_policy_attachment" "k8s_worker_ecr_policy" {
   role       = aws_iam_role.k8s_worker_role.name
+
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
@@ -124,9 +129,9 @@ resource "aws_iam_role_policy_attachment" "k8s_worker_ec2_full" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 } 
 
-resource "aws_iam_role_policy_attachment" "k8s_worker_s3_policy" {
+resource "aws_iam_role_policy_attachment" "k8s_worker_ssm_policy" {
   role       = aws_iam_role.k8s_worker_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
 # ------------------------------------------------------------
@@ -145,6 +150,11 @@ resource "aws_iam_role_policy_attachment" "jenkins_master_ecr_policy" {
 resource "aws_iam_role_policy_attachment" "jenkins_master_s3_policy" {
   role       = aws_iam_role.jenkins_master_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "jenkins_master_ssm_policy" {
+  role       = aws_iam_role.jenkins_master_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
 # ------------------------------------------------------------
@@ -167,7 +177,7 @@ resource "aws_iam_instance_profile" "jenkins_master_instance_profile" {
 }
 
 # ------------------------------------------------------------
-# EC2 MASTER NODE
+# K8S MASTER NODE
 # ------------------------------------------------------------
 
 resource "aws_instance" "k8s_master" {
