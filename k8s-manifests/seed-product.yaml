@@ -1,0 +1,27 @@
+#This job is done to apply a script that shows products in the website 
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-products-job
+  namespace: amazona
+spec:
+  backoffLimit: 3       # Retry 3 times if it fails
+  completions: 1        # Run successfully only once
+  parallelism: 1        # Only 1 pod at a time
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: seed-products
+        image: #here should be the backend image
+        command: ["npm", "run", "seed"]  #This is command required to run the script   
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://admin:password@mongo-service:27017/amazona?authSource=admin"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
