@@ -24,6 +24,12 @@ spec:
             configMapKeyRef:
               name: amazona-config   # ConfigMap name
               key: api-url     #it contain value
-~
-~
+
+#configMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amazona-config
+data:
+  api-url: "/api"
 
