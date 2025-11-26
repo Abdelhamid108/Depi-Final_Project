@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ${FRONTEND_IMAGE}
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config   # ConfigMap name
+              key: api-url     #it contain value
+--
+#configMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amazona-config
+data:
+  api-url: "/api"
+
