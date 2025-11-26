@@ -10,8 +10,6 @@ metadata:
 
 data:
   aws-region: "us-east-1"
-  aws-bucket-name: "amazona20"
-
+  aws-bucket-name: ${BUCKET_NAME}
   paypal-client-id: "sb"
-
   react-app-api-url: "/api"
