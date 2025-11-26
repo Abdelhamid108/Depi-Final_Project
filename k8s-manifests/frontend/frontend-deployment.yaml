@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+capiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
@@ -23,6 +23,6 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: amazona-config   
-              key: api-url     
+              key: react-app-api-url     
 
 
