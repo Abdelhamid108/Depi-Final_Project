@@ -2,7 +2,7 @@ capiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: default
+  namespace: amazona
 spec:
   replicas: 2
   selector:
