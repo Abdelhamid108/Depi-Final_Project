@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: <YOUR_ECR_REPO_URL>/frontend:latest   #image name here
+        image: ${FRONTEND_IMAGE}
         ports:
         - containerPort: 80
         env:
@@ -24,7 +24,7 @@ spec:
             configMapKeyRef:
               name: amazona-config   # ConfigMap name
               key: api-url     #it contain value
-
+--
 #configMap
 apiVersion: v1
 kind: ConfigMap
