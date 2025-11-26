@@ -101,7 +101,7 @@
 - name: install plugin
   jenkins_plugin:
     name: "{{ item }}"
-    state: latest
+    state: present
     url_username: admin
     url_password: "{{ secretpwd.stdout }}"
   with_items: "{{ jenkins_plugins }}"
@@ -122,7 +122,7 @@
     jenkins_user: Jenkins
     jenkins_password: admin
     url: http://localhost:8080
-      B
+      
   register: jenkins_token_result
 
 - name: Copy SSH Key to Temp File
@@ -136,7 +136,7 @@
     id: jenkins-ssh-key
     type: ssh_key
     username: jenkins
-    private_key_path: /tmp/jenkins_agent_key
+    private_key_path: "/tmp/jenkins_agent_key"
     state: present
     url: http://localhost:8080
     jenkins_user: Jenkins
@@ -146,3 +146,51 @@
   file:
     path: "/tmp/jenkins_agent_key"
     state: absent      
+
+- name: Create Aws access Key Credential
+  community.general.jenkins_credential:
+    id: aws-access-key
+    description: "credential for s3 bcuket access key"  
+    type: text
+    username: jenkins
+    secret: "{{ aws_access_key_id }}"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"      
+      
+- name: Create Aws secret access  Key Credential
+  community.general.jenkins_credential:
+    id: aws-secret-key
+    description: "credential for s3 bcuket access key"
+    type: text
+    username: jenkins
+    secret: "{{ aws_secret_access_key }}"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+
+- name: Add DATABASE user_and_pass credential
+  community.general.jenkins_credential:
+    id: "mongo_db_creds"
+    type: "user_and_pass"
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+    description: "DB User and password credential"
+    username: "{{ mongo_db_user }}"
+    password: "{{mongo_db_pass }}"
+
+- name: Create AWS JWT secret  KeY Credential
+  community.general.jenkins_credential:
+    id: aws-secret-key
+    description: "credential for JWT key"
+    type: text
+    username: jenkins
+    secret: "{{ amazona_jwt_secret }}"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+
+
