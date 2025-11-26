@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: ${BACKEND_IMAGE}
+        env:
+        # AWS Credentials from Secret
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: AWS_SECRET_ACCESS_KEY
+        # App Config from ConfigMap
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config
+              key: AWS_REGION
+        - name: AWS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config
+              key: AWS_BUCKET_NAME
+        - name: PAYPAL_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config
+              key: PAYPAL_CLIENT_ID
+        # JWT Secret from Secret
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: JWT_SECRET
+        # MongoDB credentials from Secret
+        - name: MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: MONGO_USER
+        - name: MONGO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: MONGO_PASS
+        # Construct MongoDB URI dynamically
+        - name: MONGODB_URI
+          value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongodb:27017/amazona?authSource=admin"
+        ports:
+        - containerPort: 5000
