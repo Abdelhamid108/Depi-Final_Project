@@ -137,11 +137,11 @@ pipeline {
                         // to ensure the exact built version is deployed.
                         if (env.BUILD_BACKEND == 'true') {
                             env.BACKEND_IMAGE = "${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG}"
-                            sh "envsubst < backend/04-backend-deployment.yaml > backend/04-backend-deployment-injected.yaml && mv backend/04-backend-deployment-injected.yaml backend/04-backend-deployment.yaml"
+                            sh "envsubst < 04-backend-deployment.yaml > 04-backend-deployment-injected.yaml && mv 04-backend-deployment-injected.yaml 04-backend-deployment.yaml"
                         }
                         if (env.BUILD_FRONTEND == 'true') {
                             env.FRONTEND_IMAGE = "${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG}"
-                            sh "envsubst < frontend/04-frontend-deployment.yaml > frontend/04-frontend-deployment-injected.yaml && mv frontend/04-frontend-deployment-injected.yaml frontend/04-frontend-deployment.yaml"
+                            sh "envsubst < 04-frontend-deployment.yaml > 04-frontend-deployment-injected.yaml && mv 04-frontend-deployment-injected.yaml 04-frontend-deployment.yaml"
                         }
                        
                         // install nginx controller 
