@@ -176,8 +176,8 @@ pipeline {
                         --set secrets.AWS_ACCESS_KEY=${AWS_ACCESS_KEY} \
                         --set secrets.AWS_SECRET_KEY=${AWS_SECRET_KEY} \
                         --set secrets.JWT_TOKEN=${JWT_TOKEN} \
-                        --set secrets.mongoUser=${DB_USER} \
-                        --set secrets.mongoPass=${DB_PASS} \
+                        --set secrets.DB_USER=${DB_USER} \
+                        --set secrets.DB_PASS=${DB_PASS} \
                         --set config.bucketName=${env.BUCKET_NAME} \
                         --wait
                     """
