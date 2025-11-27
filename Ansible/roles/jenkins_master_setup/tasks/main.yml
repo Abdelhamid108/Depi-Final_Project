@@ -183,7 +183,7 @@
 
 - name: Create AWS JWT secret  KeY Credential
   community.general.jenkins_credential:
-    id: aws-secret-key
+    id: amazona-jwt-key
     description: "credential for JWT key"
     type: text
     username: jenkins
