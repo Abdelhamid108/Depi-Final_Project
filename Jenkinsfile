@@ -2,173 +2,187 @@ pipeline {
     agent any
 
     environment {
+        // Global Configuration
         AWS_REGION = 'us-east-1'
 
-        // AWS Credentials for ECR and S3 access
+        // --------------------------------------------------------
+        // SECURITY & CREDENTIALS MANAGEMENT
+        // --------------------------------------------------------
+        // We bind credentials to environment variables to avoid hardcoding secrets.
+        // These are managed via the Jenkins Credentials Plugin.
+        
+        // Infrastructure Credentials (AWS ECR & S3)
         AWS_ACCESS_KEY = credentials('aws-access-key')
         AWS_SECRET_KEY = credentials('aws-secret-key')
-        
-        // JWT Secret for application token signing
+
+        // Application Secrets
         JWT_TOKEN = credentials('amazona-jwt-key')
 
-        // MongoDB Credentials for database authentication
+        // Database Authentication (MongoDB)
         DB_CREDS = credentials('mongo_db_creds')
-
         DB_USER = "${DB_CREDS_USR}"
         DB_PASS = "${DB_CREDS_PSW}"
     }
-    
+
     parameters {
-        booleanParam(name: 'IsFirstRun', defaultValue: false, description: 'Check for first run to deploy everything')
+        // Operational Flag: Allows manual override to force a full redeployment
+        // Useful for disaster recovery or fresh environment setup.
+        booleanParam(name: 'IsFirstRun', defaultValue: false, description: 'Force rebuild and redeploy of all components')
     }
 
     stages {
+        // --------------------------------------------------------
+        // STAGE 1: CONFIGURATION MANAGEMENT
+        // --------------------------------------------------------
         stage('Fetch Configuration') {
             steps {
                 script {
+                    // Pattern: Centralized Configuration
+                    // We fetch non-sensitive configuration parameters from AWS Systems Manager (SSM) Parameter Store.
+                    // This decouples configuration from the pipeline code, allowing config updates without code changes.
                     env.FRONTEND_ECR_URL = sh(script: 'aws ssm get-parameter --name "/depi-project/amazona/frontend-ecr" --query "Parameter.Value" --output text', returnStdout: true).trim()
                     env.BACKEND_ECR_URL = sh(script: 'aws ssm get-parameter --name "/depi-project/amazona/backend-ecr" --query "Parameter.Value" --output text', returnStdout: true).trim()
                     env.BUCKET_NAME = sh(script: 'aws ssm get-parameter --name "/depi-project/amazona/products-bucket" --query "Parameter.Value" --output text', returnStdout: true).trim()
-                    echo "Frontend Repo URL :${env.FRONTEND_ECR_URL}"
+                    
+                    echo "Configuration loaded successfully. Registry: ${env.FRONTEND_ECR_URL.split('/')[0]}"
                 }
             }
         }
 
+        // --------------------------------------------------------
+        // STAGE 2: INTELLIGENT BUILD ANALYSIS
+        // --------------------------------------------------------
         stage('Check Changes') {
             steps {
                 script {
-                        // Smart Deployment Logic:
-                        // If 'IsFirstRun' is true, we force a full build and deploy of all components.
-                        // Otherwise, we use 'git diff' to identify which directories have changed.
-                        // This optimizes the pipeline by only building/deploying what is necessary.
-                        if (params.IsFirstRun) {
-                            env.BUILD_FRONTEND = 'true'
-                            env.BUILD_BACKEND  = 'true'
+                    // Pattern: Selective Building (Optimization)
+                    // Instead of rebuilding everything on every commit, we analyze the git diff.
+                    // This reduces pipeline latency and resource consumption.
+                    if (params.IsFirstRun) {
+                        env.BUILD_FRONTEND = 'true'
+                        env.BUILD_BACKEND  = 'true'
+                        env.APPLY_MANIFESTS = 'true'
+                        echo "Execution Mode: Full Rebuild (Forced by User)"
+                    } else {
+                        // Check for changes in the specific service directories relative to the previous commit
+                        def changes = sh(script: 'git diff --name-only HEAD~1 || true', returnStdout: true).trim()
+                        
+                        env.BUILD_FRONTEND = changes.contains('frontend/') ? 'true' : 'false'
+                        env.BUILD_BACKEND  = changes.contains('backend/') ? 'true' : 'false'
+
+                        // Manifests are applied if the chart changed OR if images were rebuilt
+                        if (changes.contains('k8s-chart/') || env.BUILD_FRONTEND == 'true' || env.BUILD_BACKEND == 'true') {
                             env.APPLY_MANIFESTS = 'true'
                         } else {
-                            def changes = sh(script: 'git diff --name-only HEAD~1 || true', returnStdout: true).trim()
-                            env.BUILD_FRONTEND = changes.contains('frontend/') ? 'true' : 'false'
-                            env.BUILD_BACKEND  = changes.contains('backend/') ? 'true' : 'false'
-                            
-                            // Manifests are applied if:
-                            // 1. The 'k8s-manifests' folder itself has changed.
-                            // 2. The Frontend or Backend images were rebuilt (requiring a deployment update).
-                            if (changes.contains('k8s-manifests/') || env.BUILD_FRONTEND == 'true' || env.BUILD_BACKEND == 'true') {
-                                env.APPLY_MANIFESTS = 'true'
-                            } else {
-                                env.APPLY_MANIFESTS = 'false'
-                            }
-                            echo "Changed files:\n${changes}"
+                            env.APPLY_MANIFESTS = 'false'
                         }
-                    echo "BUILD_FRONTEND=${env.BUILD_FRONTEND}, BUILD_BACKEND=${env.BUILD_BACKEND}, APPLY_MANIFESTS=${env.APPLY_MANIFESTS}"
-
-                    // Dynamic Versioning Strategy:
-                    // We use the Git Commit Count for each service folder to generate a unique, sequential version tag (e.g., v1.0-42).
-                    // This ensures that:
-                    // 1. Tags are human-readable and sequential.
-                    // 2. Tags only increment when code in the specific service folder changes.
-                    // 3. We achieve idempotency: re-running the pipeline without code changes produces the same tag.
+                    }
+                    
+                    // Pattern: Dynamic & Immutable Tagging
+                    // We use the git commit count to generate human-readable, sequential tags (e.g., v1.0-55).
+                    // This ensures traceability: we can link every running container back to a specific state of the code.
                     def backend_count  = sh(script: 'git rev-list --count HEAD backend/ || echo 0', returnStdout: true).trim()
                     def frontend_count = sh(script: 'git rev-list --count HEAD frontend/ || echo 0', returnStdout: true).trim()
 
                     env.BACKEND_IMAGE_TAG = "v1.0-${backend_count}"
                     env.FRONTEND_IMAGE_TAG = "v1.0-${frontend_count}"
-                    
-                    echo "Tags: Backend=${env.BACKEND_IMAGE_TAG}, Frontend=${env.FRONTEND_IMAGE_TAG}"
+
+                    echo "Build Plan: Frontend=${env.BUILD_FRONTEND}, Backend=${env.BUILD_BACKEND}, Deploy=${env.APPLY_MANIFESTS}"
                 }
             }
         }
 
-        stage('Build Frontend') {
-            agent { label 'k8s_worker' }
-            when { environment name: 'BUILD_FRONTEND', value: 'true' }
-            steps {
-                script {
-                    def registryUrl = env.FRONTEND_ECR_URL.split('/')[0]
-                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${registryUrl}"
+        // --------------------------------------------------------
+        // STAGE 3: ARTIFACT GENERATION (CI)
+        // --------------------------------------------------------
+        stage('Build & Push Images') {
+            // Optimization: Parallel Execution
+            // Frontend and Backend builds are independent, so we run them simultaneously to cut wait time by ~50%.
+            parallel {
+                stage('Build Frontend') {
+                    agent { label 'k8s_worker' } // Offload heavy build tasks to worker nodes
+                    when { environment name: 'BUILD_FRONTEND', value: 'true' }
+                    steps {
+                        script {
+                            // Logic: Dynamic Registry Authentication
+                            def registryUrl = "https://" + env.FRONTEND_ECR_URL.split('/')[0]
+                            // We use password-stdin for secure, non-interactive login
+                            sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${registryUrl}"
 
-                    dir('frontend') {
-                        sh "docker build -t ${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG} ."
-                        sh "docker push ${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG}"
+                            dir('frontend') {
+                                sh "docker build -t ${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG} ."
+                                sh "docker push ${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG}"
+                            }
+                        }
+                    }
+                }
+
+                stage('Build Backend') {
+                    agent { label 'k8s_worker' }
+                    when { environment name: 'BUILD_BACKEND', value: 'true' }
+                    steps {
+                        script {
+                            def registryUrl = "https://" + env.BACKEND_ECR_URL.split('/')[0]
+                            sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${registryUrl}"
+
+                            dir('backend') {
+                                sh "docker build -t ${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG} ."
+                                sh "docker push ${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG}"
+                            }
+                        }
                     }
                 }
             }
         }
 
-        stage('Build Backend') {
-            agent { label 'k8s_worker' }
-            when { environment name: 'BUILD_BACKEND', value: 'true' }
-            steps {
-                script {
-                    def registryUrl = env.BACKEND_ECR_URL.split('/')[0]
-                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${registryUrl}"
-
-                    dir('backend') {
-                        sh "docker build -t ${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG} ."
-                        sh "docker push ${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG}"
-                    }
-                }
-            }
-        }
-
-        stage('Deploy Manifests') {
-            agent { label 'k8s_master' }
+        // --------------------------------------------------------
+        // STAGE 4: DEPLOYMENT (CD)
+        // --------------------------------------------------------
+        stage('Deploy with Helm') {
+            agent { label 'k8s_master' } // Deployment operations must run on the Control Plane (or a node with kubectl access)
             when { environment name: 'APPLY_MANIFESTS', value: 'true' }
             steps {
                 script {
-                    dir('k8s-manifests') {
+                    // Task 1: Namespace Idempotency
+                    // Problem: 'kubectl create namespace' fails if the namespace exists.
+                    // Solution: Use '--dry-run=client -o yaml | kubectl apply -f -'.
+                    // This ensures the namespace exists (creating it if missing, updating it if present) without throwing errors.
+                    sh "kubectl create namespace amazona --dry-run=client -o yaml | kubectl apply -f -"
 
-                        sh "kubectl apply -f 00-namespace.yaml"
+                    // Task 2: Credentials Rotation (RegCred)
+                    // Problem: AWS ECR tokens expire every 12 hours.
+                    // Solution: We regenerate the 'regcred' secret on every deployment to ensure the cluster can always pull images.
+                    // We use the same dry-run pattern here to safely create or update the secret.
+                    def regServer = env.FRONTEND_ECR_URL.split('/')[0]
+                    sh """
+                        kubectl create secret docker-registry regcred \
+                        --docker-server=${regServer} \
+                        --docker-username=AWS \
+                        --docker-password=\$(aws ecr get-login-password --region ${AWS_REGION}) \
+                        --dry-run=client -o yaml | kubectl apply -n amazona -f -
+                    """
 
-                        // Create/Refresh ECR credentials secret
-                        def registryUrl = env.FRONTEND_ECR_URL.split('/')[0]
-                        sh "kubectl delete secret regcred -n amazona --ignore-not-found"
-                        sh "aws ecr get-login-password --region ${AWS_REGION} | kubectl create secret docker-registry regcred -n amazona --docker-server=${registryUrl} --docker-username=AWS --docker-password=\$(cat)"
-                         
-                        // Secret Injection:
-                        // Inject sensitive environment variables (DB creds, JWT token) into manifests at runtime.
-                        // We use a temporary file pattern (*-injected.yaml) to avoid file truncation issues 
-                        // that occur when redirecting output to the same file being read.
-                        sh "envsubst < 02-configmaps.yaml > 02-configmaps-injected.yaml && mv 02-configmaps-injected.yaml 02-configmaps.yaml"
-                        sh "envsubst < 01-secrets.yaml > 01-secrets-injected.yaml && mv 01-secrets-injected.yaml 01-secrets.yaml"
-
-                        // Dynamic Image Tag Injection:
-                        // Inject the dynamically generated image tags (e.g., v1.0-42) into deployment manifests
-                        // to ensure the exact built version is deployed.
-                        if (env.BUILD_BACKEND == 'true') {
-                            env.BACKEND_IMAGE = "${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG}"
-                            sh "envsubst < 04-backend-deployment.yaml > 04-backend-deployment-injected.yaml && mv 04-backend-deployment-injected.yaml 04-backend-deployment.yaml"
-                        }
-                        if (env.BUILD_FRONTEND == 'true') {
-                            env.FRONTEND_IMAGE = "${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG}"
-                            sh "envsubst < 04-frontend-deployment.yaml > 04-frontend-deployment-injected.yaml && mv 04-frontend-deployment-injected.yaml 04-frontend-deployment.yaml"
-                        }
-                       
-                        // install nginx controller 
-                        sh "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/aws/deploy.yaml"
-                       
-                        // Patch: Remove the "nlb" annotation to force Classic Load Balancer
-                        sh "kubectl annotate service ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-type-"
-                        
-                        // Recursive Application:
-                        // Apply all manifests recursively. Kubernetes handles dependency ordering and performs
-                        // rolling updates if image tags or configurations have changed.
-                        // applying with option excluding the seed job that has label skip apply
-                        sh "kubectl apply -f . --recursive -l 'skip-apply!=true'" 
-                       
-                        if (params.IsFirstRun) {
-                           echo "Applying seed job "
-                           sh """
-                           envsubst < 07-seed-product.yaml > 07-seed-product-injected.yaml
-                           kubectl apply -f 07-seed-product-injected.yaml
-                           """
-                        } else {
-                           echo "job already exist"
-                        }
-                    }
+                    // Task 3: Atomic Application Deployment via Helm
+                    // Why Helm?
+                    // 1. Atomic Updates: Updates all components (Deployments, Services, Configs) together.
+                    // 2. Secret Injection: Securely passes Jenkins credentials into K8s environment variables.
+                    // 3. Hooks Management: Automatically handles the database seeding logic (Post-Install Hooks).
+                    // 4. Verification: '--wait' ensures the pipeline only passes if the pods actually start running.
+                    sh """
+                        helm upgrade --install amazona ./k8s-chart \
+                        --namespace amazona \
+                        --set frontend.image=${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG} \
+                        --set backend.image=${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG} \
+                        --set secrets.AWS_ACCESS_KEY=${AWS_ACCESS_KEY} \
+                        --set secrets.AWS_SECRET_KEY=${AWS_SECRET_KEY} \
+                        --set secrets.JWT_TOKEN=${JWT_TOKEN} \
+                        --set secrets.mongoUser=${DB_USER} \
+                        --set secrets.mongoPass=${DB_PASS} \
+                        --set config.bucketName=${env.BUCKET_NAME} \
+                        --wait
+                    """
                 }
             }
         }
     }
 }
-

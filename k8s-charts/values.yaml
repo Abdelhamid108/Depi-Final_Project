@@ -1,0 +1,20 @@
+backend:
+  image: "depi-app-backend:latest"
+  replicas: 2
+  port: 5000
+
+frontend:
+  image: "depi-app-frontend:latest"
+  replicas: 2
+  port: 80
+
+secrets:
+  awsAccessKey: ""
+  awsSecretKey: ""
+  jwtSecret: ""
+  mongoUser: ""
+  mongoPass: ""
+
+config:
+  bucketName: "default-bucket"
+  region: "us-east-1"
