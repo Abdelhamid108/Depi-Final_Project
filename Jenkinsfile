@@ -158,7 +158,7 @@ pipeline {
                        
                         if (params.IsFirstRun) {
                            echo "Applying seed job "
-                           """
+                           sh """
                            envsubst < 07-seed-product.yaml > 07-seed-product-injected.yaml
                            kubectl apply -f 07-seed-product-injected.yaml
                            """
