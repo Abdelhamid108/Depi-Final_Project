@@ -1,5 +1,5 @@
 [jenkins_masters]
-jenkins_master-node           ansible_host=${jenkins_master_public_ip}
+jenkins_master-node   ansible_host=${jenkins_master_public_ip}  aws_access_key_id=${aws_access_key} aws_secret_access_key=${aws_secret_key}
 
 [k8s_masters]   
 master-node           ansible_host=${k8s_master_public_ip}

@@ -31,3 +31,21 @@ resource "aws_s3_bucket_acl" "amazona_bucket" {
   bucket = aws_s3_bucket.amazona_bucket.id
   acl    = "public-read"
 }
+
+resource "aws_iam_user" "s3_user" {
+  name = "s3_user"
+  
+  tags = {
+    Name = "s3-bucket-user"
+    Description = "iam user for s3 products bucket"
+  }
+}
+
+resource "aws_iam_access_key" "s3_user" {
+  user = aws_iam_user.s3_user.name
+}
+
+resource "aws_iam_user_policy_attachment" "s3-user-attach" {
+  user       = aws_iam_user.s3_user.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
