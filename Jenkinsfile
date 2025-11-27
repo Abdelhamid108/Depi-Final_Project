@@ -117,6 +117,14 @@ pipeline {
             steps {
                 script {
                     dir('k8s-manifests') {
+
+                        sh "kubectl apply -f 00-namespace.yaml"
+
+                        // Create/Refresh ECR credentials secret
+                        def registryUrl = env.FRONTEND_ECR_URL.split('/')[0]
+                        sh "kubectl delete secret regcred -n amazona --ignore-not-found"
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | kubectl create secret docker-registry regcred -n amazona --docker-server=${registryUrl} --docker-username=AWS --docker-password=\$(cat)"
+                         
                         // Secret Injection:
                         // Inject sensitive environment variables (DB creds, JWT token) into manifests at runtime.
                         // We use a temporary file pattern (*-injected.yaml) to avoid file truncation issues 

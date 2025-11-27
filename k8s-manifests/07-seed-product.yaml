@@ -13,6 +13,8 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
+      imagePullSecrets:
+      - name: regcred
       containers:
       - name: seed-products
         image: ${BACKEND_IMAGE}
