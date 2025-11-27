@@ -156,7 +156,7 @@ pipeline {
                         // applying with option excluding the seed job that has label skip apply
                         sh "kubectl apply -f . --recursive -l 'skip-apply!=true'" 
                        
-                        if (parms.IsFirstRun == 'true') {
+                        if (params.IsFirstRun == 'true') {
                            echo "Applying seed job "
                            """
                            envsubst < 07-seed-product.yaml > 07-seed-product-injected.yaml

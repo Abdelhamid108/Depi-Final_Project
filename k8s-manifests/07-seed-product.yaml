@@ -33,7 +33,7 @@ spec:
               key: mongo-root-password
 
         - name: MONGODB_URI
-          value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongo-service:27017/amazona?authSource=admin"
+          value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongodb:27017/amazona?authSource=admin"
         resources:
           limits:
             memory: "512Mi"
