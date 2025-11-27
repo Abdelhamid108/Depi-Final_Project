@@ -114,7 +114,7 @@
   pip:
     name: python-jenkins
     state: present
-
+ 
 - name: Generate Jenkins API Token
   community.general.jenkins_credential:
     name: "ansible-token"

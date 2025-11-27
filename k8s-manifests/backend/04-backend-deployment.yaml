@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: amazona   
 spec:
   replicas: 2
   selector:
@@ -21,7 +22,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: aws_access_key_id
+              key: aws-access-key-id
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:

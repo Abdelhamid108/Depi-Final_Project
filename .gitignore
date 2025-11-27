@@ -51,3 +51,4 @@ k88s
 *.bak
 *.swp
 *.swo
+*hosts.ini

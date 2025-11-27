@@ -94,3 +94,20 @@
     join_command: "{{ join_command_raw.stdout }}"
   delegate_to: localhost
   delegate_facts: true
+
+- name: create kube config directory for jenkins
+  ansible.builtin.file:
+    path: /home/jenkins/.kube
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+
+- name: copy admin.conf to jenkins user
+  copy:
+    remote_src: yes
+    src: "/etc/kubernetes/admin.conf"
+    dest: "/home/jenkins/.kube/config"
+    owner: jenkins
+    group: jenkins
+    mode: '0644'    

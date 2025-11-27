@@ -4,6 +4,8 @@ kind: Job
 metadata:
   name: seed-products-job
   namespace: amazona
+  labels:
+    skip-apply: "true"
 spec:
   backoffLimit: 3       # Retry 3 times if it fails
   completions: 1        # Run successfully only once
@@ -13,7 +15,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: seed-products
-        image: #here should be the backend image
+        image: ${BACKEND_IMAGE}
         command: ["npm", "run", "seed"]  #This is command required to run the script   
         env:
         # MongoDB credentials from Secret

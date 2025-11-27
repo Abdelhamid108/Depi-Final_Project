@@ -121,7 +121,7 @@ pipeline {
                         // Inject sensitive environment variables (DB creds, JWT token) into manifests at runtime.
                         // We use a temporary file pattern (*-injected.yaml) to avoid file truncation issues 
                         // that occur when redirecting output to the same file being read.
-                        sh "envsubst < 01-configmaps.yaml > 01-configmaps-injected.yaml && mv 01-configmaps-injected.yaml 01-configmaps.yaml"
+                        sh "envsubst < 02-configmaps.yaml > 02-configmaps-injected.yaml && mv 02-configmaps-injected.yaml 02-configmaps.yaml"
                         sh "envsubst < 01-secrets.yaml > 01-secrets-injected.yaml && mv 01-secrets-injected.yaml 01-secrets.yaml"
 
                         // Dynamic Image Tag Injection:
@@ -129,11 +129,11 @@ pipeline {
                         // to ensure the exact built version is deployed.
                         if (env.BUILD_BACKEND == 'true') {
                             env.BACKEND_IMAGE = "${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG}"
-                            sh "envsubst < backend/backend-deployment.yaml > backend/backend-deployment-injected.yaml && mv backend/backend-deployment-injected.yaml backend/backend-deployment.yaml"
+                            sh "envsubst < backend/04-backend-deployment.yaml > backend/04-backend-deployment-injected.yaml && mv backend/04-backend-deployment-injected.yaml backend/04-backend-deployment.yaml"
                         }
                         if (env.BUILD_FRONTEND == 'true') {
                             env.FRONTEND_IMAGE = "${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG}"
-                            sh "envsubst < frontend/frontend-deployment.yaml > frontend/frontend-deployment-injected.yaml && mv frontend/frontend-deployment-injected.yaml frontend/frontend-deployment.yaml"
+                            sh "envsubst < frontend/04-frontend-deployment.yaml > frontend/04-frontend-deployment-injected.yaml && mv frontend/04-frontend-deployment-injected.yaml frontend/04-frontend-deployment.yaml"
                         }
                        
                         // install nginx controller 
@@ -145,7 +145,18 @@ pipeline {
                         // Recursive Application:
                         // Apply all manifests recursively. Kubernetes handles dependency ordering and performs
                         // rolling updates if image tags or configurations have changed.
-                        sh "kubectl apply -f . --recursive" 
+                        // applying with option excluding the seed job that has label skip apply
+                        sh "kubectl apply -f . --recursive -l 'skip-apply!=true'" 
+                       
+                        if (parms.IsFirstRun == 'true') {
+                           echo "Applying seed job "
+                           """
+                           envsubst < 07-seed-product.yaml > 07-seed-product-injected.yaml
+                           kubectl apply -f 07-seed-product-injected.yaml
+                           """
+                        } else {
+                           echo "job already exist"
+                        }
                     }
                 }
             }
