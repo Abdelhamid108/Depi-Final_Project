@@ -21,45 +21,45 @@ spec:
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: AWS_ACCESS_KEY_ID
+              key: aws_access_key_id
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: AWS_SECRET_ACCESS_KEY
+              key: aws-secret-access-key
         # App Config from ConfigMap
         - name: AWS_REGION
           valueFrom:
             configMapKeyRef:
               name: amazona-config
-              key: AWS_REGION
+              key: aws-region
         - name: AWS_BUCKET_NAME
           valueFrom:
             configMapKeyRef:
               name: amazona-config
-              key: AWS_BUCKET_NAME
+              key: aws-bucket-name
         - name: PAYPAL_CLIENT_ID
           valueFrom:
             configMapKeyRef:
               name: amazona-config
-              key: PAYPAL_CLIENT_ID
+              key: paypal-client-id
         # JWT Secret from Secret
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: JWT_SECRET
+              key: jwt-secret
         # MongoDB credentials from Secret
         - name: MONGO_USER
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: MONGO_USER
+              key: mongo-root-username
         - name: MONGO_PASS
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: MONGO_PASS
+              key: mongo-root-password
         # Construct MongoDB URI dynamically
         - name: MONGODB_URI
           value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongodb:27017/amazona?authSource=admin"

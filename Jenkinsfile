@@ -135,7 +135,13 @@ pipeline {
                             env.FRONTEND_IMAGE = "${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG}"
                             sh "envsubst < frontend/frontend-deployment.yaml > frontend/frontend-deployment-injected.yaml && mv frontend/frontend-deployment-injected.yaml frontend/frontend-deployment.yaml"
                         }
-
+                       
+                        // install nginx controller 
+                        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/aws/deploy.yaml
+                       
+                        // Patch: Remove the "nlb" annotation to force Classic Load Balancer
+                        kubectl annotate service ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-type-
+                        
                         // Recursive Application:
                         // Apply all manifests recursively. Kubernetes handles dependency ordering and performs
                         // rolling updates if image tags or configurations have changed.

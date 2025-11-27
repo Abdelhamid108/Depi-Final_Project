@@ -16,8 +16,20 @@ spec:
         image: #here should be the backend image
         command: ["npm", "run", "seed"]  #This is command required to run the script   
         env:
+        # MongoDB credentials from Secret
+        - name: MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-username
+        - name: MONGO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-password
+
         - name: MONGODB_URI
-          value: "mongodb://admin:password@mongo-service:27017/amazona?authSource=admin"
+          value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongo-service:27017/amazona?authSource=admin"
         resources:
           limits:
             memory: "512Mi"
