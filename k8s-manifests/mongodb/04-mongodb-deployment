@@ -27,12 +27,12 @@ spec:
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: MONGO_INITDB_ROOT_USERNAME
+              key: mongo-root-username
         - name: MONGO_INITDB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
-              key: MONGO_INITDB_ROOT_PASSWORD
+              key: mongo-root-password
   volumeClaimTemplates:
   - metadata:
       name: data
