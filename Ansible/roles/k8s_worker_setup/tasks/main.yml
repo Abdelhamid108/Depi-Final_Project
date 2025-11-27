@@ -10,6 +10,8 @@
 - name: Delete node from cluster
   command: kubectl delete node {{ ansible_hostname }}
   delegate_to: master-node
+  become_user: k8s_manger
+  ignore_errors: yes # Ignore errors if the node was never joined  
 
 - name: restart kublet
   service:

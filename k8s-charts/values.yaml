@@ -9,11 +9,11 @@ frontend:
   port: 80
 
 secrets:
-  awsAccessKey: ""
-  awsSecretKey: ""
-  jwtSecret: ""
-  mongoUser: ""
-  mongoPass: ""
+  AWS_ACCESS_KEY: ""
+  AWS_SECRET_KEY: ""
+  JWT_TOKEN: ""
+  DB_USER: ""
+  DB_PASS: ""
 
 config:
   bucketName: "default-bucket"

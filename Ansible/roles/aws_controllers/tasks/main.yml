@@ -61,6 +61,9 @@
     kubeconfig: /etc/kubernetes/admin.conf    # to give acces to setup the cluster intead of doing it as k8s user
     values:
       controller:
+        config:
+          use-proxy-protocol: "true"
+       
         service:
           # This tells AWS to create a Classic Load Balancer (ELB) for us
           type: LoadBalancer
