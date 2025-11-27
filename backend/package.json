@@ -33,7 +33,7 @@
   "scripts": {
     "start": "nodemon --watch backend --exec babel-node backend/server.js",
     "prod": "node dist/server.js",
-  //  "dev": "nodemon --watch . --exec babel-node server.js",
+    "dev": "nodemon --watch . --exec babel-node server.js",
     "build": "rm -rf dist && babel . -d dist --ignore node_modules,uploads",
     "seed": "babel-node seed-products.js",
     "seed-prod": "node dist/seed-products.js",
