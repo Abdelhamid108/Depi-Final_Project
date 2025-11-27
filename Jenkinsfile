@@ -169,7 +169,7 @@ pipeline {
                     // 3. Hooks Management: Automatically handles the database seeding logic (Post-Install Hooks).
                     // 4. Verification: '--wait' ensures the pipeline only passes if the pods actually start running.
                     sh """
-                        helm upgrade --install amazona ./k8s-chart \
+                        helm upgrade --install amazona ./k8s-charts \
                         --namespace amazona \
                         --set frontend.image=${env.FRONTEND_ECR_URL}:${FRONTEND_IMAGE_TAG} \
                         --set backend.image=${env.BACKEND_ECR_URL}:${BACKEND_IMAGE_TAG} \
