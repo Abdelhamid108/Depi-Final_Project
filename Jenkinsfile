@@ -137,10 +137,10 @@ pipeline {
                         }
                        
                         // install nginx controller 
-                        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/aws/deploy.yaml
+                        sh "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/aws/deploy.yaml"
                        
                         // Patch: Remove the "nlb" annotation to force Classic Load Balancer
-                        kubectl annotate service ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-type-
+                        sh "kubectl annotate service ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-type-"
                         
                         // Recursive Application:
                         // Apply all manifests recursively. Kubernetes handles dependency ordering and performs
