@@ -3,10 +3,6 @@ kind: Deployment
 metadata:
   name: backend
   namespace: amazona  
-  annotations:
-      prometheus.io/scrape: "true"
-      prometheus.io/path: "/metrics"
-      prometheus.io/port: "5000"
 spec:
   replicas: {{ .Values.backend.replicas }}
   selector:
@@ -16,12 +12,18 @@ spec:
     metadata:
       labels:
         app: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "5000"
     spec:
       imagePullSecrets:
       - name: regcred
       containers:
       - name: backend
         image: {{ .Values.backend.image }}
+        ports:
+          - containerPort: 5000
         env:
         # AWS Credentials from Secret
         - name: AWS_ACCESS_KEY_ID
