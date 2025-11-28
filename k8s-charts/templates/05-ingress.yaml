@@ -10,6 +10,11 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     # Force the Redirect to HTTPS
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Basic Auth for Prometheus
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret: "prometheus-basic-auth"
+    nginx.ingress.kubernetes.io/auth-realm: "Protected Metrics"
+
 spec:
   ingressClassName: nginx
   tls:
@@ -34,4 +39,23 @@ spec:
             name: frontend-service
             port:
               number: 80
+  rules:
+  - host: monitoring.example.com
+    http:
+      paths:
+        - path: /prometheus
+          pathType: Prefix
+          backend:
+            service:
+              name: prometheus-service
+              port:
+                number: 9090
+        - path: /grafana
+          pathType: Prefix
+          backend:
+            service:
+              name: grafana-service
+              port:
+                number: 3000
+      
 
