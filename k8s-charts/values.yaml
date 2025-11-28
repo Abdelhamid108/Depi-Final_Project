@@ -18,3 +18,7 @@ secrets:
 config:
   bucketName: "default-bucket"
   region: "us-east-1"
+
+monitoring:
+  auth:
+    cred: "admin:$apr1$Nk5VHIhG$D3pBCwduB5c7RN.DNHHXl1"  
