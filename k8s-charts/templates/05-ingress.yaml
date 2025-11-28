@@ -6,12 +6,20 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
+    # Link to the ClusterIssuer
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Force the Redirect to HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - depiamazona.ddnsgeek.com  
+    secretName: amazona-tls-secret
   rules:
-  - http:
+  - host: depiamazona.ddnsgeek.com 
+    http:
       paths:
-      # FIXED: Capture 'api' inside the regex so it is NOT removed
       - path: /?(api/.*)
         pathType: ImplementationSpecific
         backend:
@@ -26,3 +34,4 @@ spec:
             name: frontend-service
             port:
               number: 80
+
