@@ -8,7 +8,7 @@
   ignore_errors: yes # Ignore errors if the node was never joined
 
 - name: Delete node from cluster
-  command: kubectl delete node {{ ansible_hostname }}
+  command: kubectl delete node {{ ansible_fqdn }}
   delegate_to: master-node
   become_user: k8s_manger
   ignore_errors: yes # Ignore errors if the node was never joined  
