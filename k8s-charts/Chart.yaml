@@ -1,0 +1,7 @@
+apiVersion: v2
+name: amazona
+description: A Helm chart for Amazona E-commerce
+type: application
+version: 0.1.0
+apVersion: "0.1.0"
+appVersion: "1.0.0"  

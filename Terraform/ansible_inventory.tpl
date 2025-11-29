@@ -1,13 +1,18 @@
-[masters]
-master-node           ansible_host=${master_public_ip}
+[jenkins_masters]
+jenkins_master-node   ansible_host=${jenkins_master_public_ip}  aws_access_key_id=${aws_access_key} aws_secret_access_key=${aws_secret_key}
 
-[workers]
+[k8s_masters]   
+master-node           ansible_host=${k8s_master_public_ip}
+
+[k8s_workers]
 #loop for assigning nodes to theire ips dynamically using terrafrom outputs
-%{ for i, ip in worker_private_ips }
+%{ for i, ip in k8s_worker_private_ips }
 worker-node-${i+1}    ansible_host=${ip}
 %{ endfor }         
 
 [k8s_cluster:children]
-masters
-workers
+k8s_masters
+k8s_workers
+
+
 

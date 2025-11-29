@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: amazona-config
+  namespace: amazona
+  labels:
+    app: amazona
+    component: Configuration
+    managed-by: Configuration-Team
+
+data:
+  aws-region: {{ .Values.config.region }}
+  aws-bucket-name: {{ .Values.config.bucketName }}
+  paypal-client-id: "sb"
+  react-app-api-url: "/api"

@@ -56,7 +56,7 @@
     create_home: yes
     groups: docker # Adds user to 'docker' group to run docker commands
     append: yes
-  when: inventory_hostname in groups['workers'] # Only runs on workers
+  when: inventory_hostname in groups['k8s_cluster'] # Only runs on workers
 
 # This copies the PUBLIC key from the Jenkins master (in files/)
 # to the 'jenkins' user's authorized_keys file on the agents.
@@ -66,4 +66,4 @@
     user: jenkins
     state: present
     key: "{{ lookup('file', '../files/depi_jenkins_rsa.pub') }}"
-  when: inventory_hostname in groups['workers'] # Only runs on workers
+  when: inventory_hostname in groups['k8s_cluster'] # Only runs on workers
