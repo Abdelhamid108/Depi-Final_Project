@@ -93,7 +93,7 @@ Frontend and backend builds run in parallel for speed.
 AWS ECR requires a fresh login token for each build:
 
 ```
-aws ecr get-login-password --region $AWS_REGION | \
+aws ecr get-login-password --region $AWS_REGION | 
 docker login --username AWS --password-stdin <registry-url>
 ```
 **Build Commands:**
@@ -160,5 +160,5 @@ helm upgrade --install amazona ./k8s-charts \
 This ensures: \
  • Both services update together \
  • Config/secrets synced with each deployment \
- • Only succeeds if pods reach Ready state \
+ • Only succeeds if pods reach Ready state 
 
