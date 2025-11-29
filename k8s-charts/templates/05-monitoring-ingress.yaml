@@ -1,28 +1,49 @@
+# -----------------------------------------------------------
+# Ingress: amazona-ingress-monitoring
+# Purpose:
+# - Exposes Prometheus and Grafana dashboards over HTTPS
+# - Protects access with HTTP Basic Authentication
+# - Uses cert-manager / Let's Encrypt for TLS certificates
+# -----------------------------------------------------------
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: amazona-ingress-monitoring
   namespace: amazona
   annotations:
-    # Link to the ClusterIssuer
+    # Use the "letsencrypt-prod" ClusterIssuer to issue TLS certificates
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # Force the Redirect to HTTPS
+
+    # Enforce HTTPS by redirecting all HTTP requests to HTTPS
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    # Basic Auth for Prometheus & Grafana
+
+    # Enable HTTP Basic Authentication for monitoring endpoints
     nginx.ingress.kubernetes.io/auth-type: "basic"
+
+    # Secret containing the htpasswd credentials used for basic auth
     nginx.ingress.kubernetes.io/auth-secret: "prometheus-basic-auth"
+
+    # Realm message shown in the browser authentication popup
     nginx.ingress.kubernetes.io/auth-realm: "Protected Metrics"
 
 spec:
+  # Use the NGINX IngressClass installed in the cluster
   ingressClassName: nginx
+
+  # TLS configuration for the monitoring host
   tls:
   - hosts:
+    # Public host dedicated to monitoring (Prometheus / Grafana)
     - {{ .Values.ingress.app_monitor }}
+    # Secret that will store the TLS certificate for the monitoring host
     secretName: monitoring-tls-secret
+
   rules:
   - host: {{ .Values.ingress.app_monitor }}
     http:
       paths:
+      # Expose Prometheus UI under /prometheus
       - path: /prometheus
         pathType: Prefix
         backend:
@@ -30,6 +51,8 @@ spec:
             name: prometheus-service
             port:
               number: 9090
+
+      # Expose Grafana on the root path (/)
       - path: /
         pathType: Prefix
         backend:
@@ -37,4 +60,3 @@ spec:
             name: grafana-service
             port:
               number: 3000
-
