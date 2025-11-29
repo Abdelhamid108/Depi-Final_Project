@@ -25,14 +25,14 @@ Unlike managed services (EKS), this cluster is fully self-managed, providing com
 ### 1.2. Cluster Configuration Specifications
 The following technical specifications define the self-managed cluster state as enforced by Ansible.
 
-| Component | Specification | Details |
-| :--- | :--- | :--- |
-| **Orchestrator** | `kubeadm` | Bootstraps the Control Plane. |
-| **CRI** | `cri-dockerd` | Docker Shim allowing Kubernetes to use Docker Engine as the runtime. |
-| **CNI** | `Calico` (v3.28) | Provides Pod networking and Network Policy enforcement. |
-| **Cloud Provider** | `external` | Kubelet configured with `--cloud-provider=external` to integrate with AWS CCM. |
-| **Pod CIDR** | `192.168.0.0/16` | Defined during `kubeadm init` for Calico compatibility. |
-| **Service CIDR** | Default | Standard Service IP range. |
+| Component          | Specification      | Details                                                                        |
+| :----------------- | :----------------- | :----------------------------------------------------------------------------- |
+| **Orchestrator**   | `kubeadm`          | Bootstraps the Control Plane.                                                  |
+| **CRI**            | `cri-dockerd`      | Docker Shim allowing Kubernetes to use Docker Engine as the runtime.           |
+| **CNI**            | `Calico` (v3.28)   | Provides Pod networking and Network Policy enforcement.                        |
+| **Cloud Provider** | `external`         | Kubelet configured with `--cloud-provider=external` to integrate with AWS CCM. |
+| **Pod CIDR**       | `192.168.0.0/16`   | Defined during `kubeadm init` for Calico compatibility.                        |
+| **Service CIDR**   | Default            | Standard Service IP range.                                                     |
 
 ### 1.3. Network Integration
 *   **Ingress Controller**: NGINX Ingress Controller deployed as a DaemonSet/Deployment.
@@ -71,28 +71,29 @@ k8s-charts/
     ├── 06-prometheus.yaml      # Prometheus stack
     ├── 06-grafana.yaml         # Grafana dashboard
     └── 07-seed-product.yaml    # Job to seed initial data
+```
 ### 2.2. Manifest Reference
 
 The following table details the purpose and configuration of each template file in the chart.
 
-| File | Kind | Purpose & Key Configuration |
-| :--- | :--- | :--- |
-| `00-cluster-issuer.yaml` | `ClusterIssuer` | **TLS Management**: Configures Cert-Manager to use Let's Encrypt Production (`acme-v02`). Uses HTTP-01 challenge via NGINX. |
-| `00-rbac.yaml` | `ClusterRole` | **Service Discovery**: Grants Prometheus read-only access to `pods`, `services`, and `nodes` to enable auto-discovery of scrape targets. |
-| `01-secrets.yaml` | `Secret` | **Credentials**: Stores sensitive data (AWS Keys, DB Passwords, JWT Token) injected from `values.yaml`. Base64 encoded. |
-| `01-storage-class.yaml` | `StorageClass` | **EBS Provisioning**: Defines the `ebs-sc` class using `ebs.csi.aws.com`. Configures **gp3** volumes with encryption enabled. Set as default. |
-| `02-configmaps.yaml` | `ConfigMap` | **App Config**: Stores non-sensitive config like `aws-region`, `bucket-name`, and `react-app-api-url`. |
-| `03-backend-service.yaml` | `Service` | **Internal Networking**: Exposes the Backend Pods on port `5000` (ClusterIP). |
-| `03-frontend-service.yaml` | `Service` | **Internal Networking**: Exposes the Frontend Pods on port `80` (ClusterIP). |
-| `03-mongodb-service.yaml` | `Service` | **Database Networking**: Exposes MongoDB on port `27017`. Headless service for StatefulSet discovery. |
-| `04-backend-deployment.yaml` | `Deployment` | **API Workload**: Deploys the Node.js backend. Configured with Prometheus scrape annotations (`/metrics`). |
-| `04-frontend-deployment.yaml` | `Deployment` | **UI Workload**: Deploys the React frontend. Injects API URL from ConfigMap. |
-| `04-mongodb-deployment.yaml` | `StatefulSet` | **Database Workload**: Deploys MongoDB with a persistent volume claim template (`data`) using the `ebs-sc` storage class. |
-| `05-app-ingress.yaml` | `Ingress` | **Public Routing**: Routes `amzona-depi...` to Frontend/Backend. Enforces HTTPS and rewrite rules. |
-| `05-monitoring-ingress.yaml` | `Ingress` | **Admin Routing**: Routes `monitor-amzona...` to Grafana/Prometheus. Enforces **Basic Auth**. |
-| `06-prometheus.yaml` | `Deployment` | **Metrics Engine**: Deploys Prometheus v2.40. Configured to scrape the cluster and itself. |
-| `06-grafana.yaml` | `Deployment` | **Visualization**: Deploys Grafana v10. Auto-provisions Prometheus as a datasource. |
-| `07-seed-product.yaml` | `Job` | **Data Initialization**: A **Helm Hook** (`post-install`) that runs `npm run seed` to populate the DB with initial products. Deletes itself on success. |
+| File                         | Kind            | Purpose & Key Configuration                                                                                                    |
+| :--------------------------- | :-------------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| `00-cluster-issuer.yaml`     | `ClusterIssuer` | **TLS Management**: Configures Cert-Manager to use Let's Encrypt Production (`acme-v02`). Uses HTTP-01 challenge via NGINX.    |
+| `00-rbac.yaml`               | `ClusterRole`   | **Service Discovery**: Grants Prometheus read-only access to `pods`, `services`, and `nodes` to enable auto-discovery of scrape targets. |
+| `01-secrets.yaml`            | `Secret`        | **Credentials**: Stores sensitive data (AWS Keys, DB Passwords, JWT Token) injected from `values.yaml`. Base64 encoded.        |
+| `01-storage-class.yaml`      | `StorageClass`  | **EBS Provisioning**: Defines the `ebs-sc` class using `ebs.csi.aws.com`. Configures **gp3** volumes with encryption enabled. Set as default. |
+| `02-configmaps.yaml`         | `ConfigMap`     | **App Config**: Stores non-sensitive config like `aws-region`, `bucket-name`, and `react-app-api-url`.                         |
+| `03-backend-service.yaml`    | `Service`       | **Internal Networking**: Exposes the Backend Pods on port `5000` (ClusterIP).                                                  |
+| `03-frontend-service.yaml`   | `Service`       | **Internal Networking**: Exposes the Frontend Pods on port `80` (ClusterIP).                                                   |
+| `03-mongodb-service.yaml`    | `Service`       | **Database Networking**: Exposes MongoDB on port `27017`. Headless service for StatefulSet discovery.                          |
+| `04-backend-deployment.yaml` | `Deployment`    | **API Workload**: Deploys the Node.js backend. Configured with Prometheus scrape annotations (`/metrics`).                     |
+| `04-frontend-deployment.yaml`| `Deployment`    | **UI Workload**: Deploys the React frontend. Injects API URL from ConfigMap.                                                   |
+| `04-mongodb-deployment.yaml` | `StatefulSet`   | **Database Workload**: Deploys MongoDB with a persistent volume claim template (`data`) using the `ebs-sc` storage class.      |
+| `05-app-ingress.yaml`        | `Ingress`       | **Public Routing**: Routes `amzona-depi...` to Frontend/Backend. Enforces HTTPS and rewrite rules.                             |
+| `05-monitoring-ingress.yaml` | `Ingress`       | **Admin Routing**: Routes `monitor-amzona...` to Grafana/Prometheus. Enforces **Basic Auth**.                                  |
+| `06-prometheus.yaml`         | `Deployment`    | **Metrics Engine**: Deploys Prometheus v2.40. Configured to scrape the cluster and itself.                                     |
+| `06-grafana.yaml`            | `Deployment`    | **Visualization**: Deploys Grafana v10. Auto-provisions Prometheus as a datasource.                                            |
+| `07-seed-product.yaml`       | `Job`           | **Data Initialization**: A **Helm Hook** (`post-install`) that runs `npm run seed` to populate the DB with initial products. Deletes itself on success. |
 
 ### 2.3. Configuration Values (`values.yaml`)
 
@@ -214,10 +215,9 @@ helm install amazona ./k8s-charts \
 
 ## 6. Troubleshooting
 
-| Symptom                          | Root Cause                                | Resolution                                                    |
-| :------------------------------- | :---------------------------------------- | :------------------------------------------------------------ |
-| **Pods Pending**                 | PVC not bound or insufficient resources.  | Check StorageClass and EBS limits.                            |
-| **Ingress 404/502**              | Backend service unreachable.              | Verify Service selectors and Pod health. Check NGINX logs.    |
-| **DB Connection Failed**         | Invalid credentials or network issue.     | Verify Secret values and MongoDB StatefulSet status.          |
-| **Load Balancer Not Created**    | Cloud Controller Manager failure.         | Check `kube-system` logs for `aws-cloud-controller-manager`.  |
-
+| Symptom                       | Root Cause                               | Resolution                                                   |
+| :---------------------------- | :--------------------------------------- | :----------------------------------------------------------- |
+| **Pods Pending**              | PVC not bound or insufficient resources. | Check StorageClass and EBS limits.                           |
+| **Ingress 404/502**           | Backend service unreachable.             | Verify Service selectors and Pod health. Check NGINX logs.   |
+| **DB Connection Failed**      | Invalid credentials or network issue.    | Verify Secret values and MongoDB StatefulSet status.         |
+| **Load Balancer Not Created** | Cloud Controller Manager failure.        | Check `kube-system` logs for `aws-cloud-controller-manager`. |
