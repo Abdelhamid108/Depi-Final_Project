@@ -108,11 +108,6 @@ resource "aws_route_table_association" "public_assoc2" {
   subnet_id      = aws_subnet.jenkins_public_subnet.id
   route_table_id = aws_route_table.public_rt.id
 }
-# Associate Public Subnet 2 with Public Route Table
-resource "aws_route_table_association" "public_assoc2" {
-  subnet_id      = aws_subnet.public_subnet2.id
-  route_table_id = aws_route_table.public_rt.id
-}
 
 
 ########################################
