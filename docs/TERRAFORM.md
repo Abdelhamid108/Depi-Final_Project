@@ -16,11 +16,18 @@ The infrastructure is modularized into the following components:
 *   **Compute**: EC2 instances for Jenkins Master, Kubernetes Master (Bastion), and Kubernetes Workers.
 *   **Storage**: S3 buckets for product data.
 *   **Registry**: ECR repositories for container images.
+*   **Control Node**: Local machine (localhost) running Ansible to configure all provisioned instances via SSH.
 
 ### 1.2. Architecture Diagram
 
 ```mermaid
 graph TD
+    subgraph Local_Environment [Local Environment]
+        style Local_Environment fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px,stroke-dasharray: 5 5
+        Control_Node(Control Node / Ansible)
+        style Control_Node fill:#607d8b,stroke:#455a64,color:#fff
+    end
+
     subgraph AWS_Cloud [AWS Cloud]
         style AWS_Cloud fill:#f9f9f9,stroke:#333,stroke-width:2px
         
@@ -71,6 +78,10 @@ graph TD
         Jenkins -.->|Push Images| ECR
         Jenkins -.->|Sync Assets| S3
     end
+
+    Control_Node =="SSH (Config via Ansible)"==> IGW
+    IGW -.-> Bastion
+    IGW -.-> Jenkins
 ```
 
 ## 2. Directory Hierarchy
