@@ -39,19 +39,18 @@ spec:
             name: frontend-service
             port:
               number: 80
-  rules:
   - host: monitoring.example.com
     http:
       paths:
-        - path: /prometheus
-          pathType: Prefix
+        - path: /prometheus/?(.*)
+          pathType: ImplementationSpecific
           backend:
             service:
               name: prometheus-service
               port:
                 number: 9090
-        - path: /grafana
-          pathType: Prefix
+        - path: /grafana/?(.*)
+          pathType: ImplementationSpecific
           backend:
             service:
               name: grafana-service
