@@ -53,18 +53,19 @@ graph TD
             subgraph Private_Subnets [Private Subnets]
                 style Private_Subnets fill:#f3e5f5,stroke:#7b1fa2
                 
-                Worker1(K8s Worker 1)
+                Worker1(K8s Worker 1 / Agent)
                 style Worker1 fill:#e1bee7,stroke:#8e24aa
                 
-                Worker2(K8s Worker 2)
+                Worker2(K8s Worker 2 / Agent)
                 style Worker2 fill:#e1bee7,stroke:#8e24aa
             end
             
             IGW ==> Public_Subnets
             NAT ==> Private_Subnets
-            Bastion -.->|SSH/Control| Worker1
-            Bastion -.->|SSH/Control| Worker2
-            Jenkins -.->|SSH| Bastion
+            Bastion -.->|Control Plane| Worker1
+            Bastion -.->|Control Plane| Worker2
+            Jenkins -.->|Trigger Job| Worker1
+            Jenkins -.->|Trigger Job| Worker2
         end
         
         S3(S3 Bucket: Products)
@@ -73,10 +74,11 @@ graph TD
         ECR(ECR: Docker Images)
         style ECR fill:#a5d6a7,stroke:#2e7d32
         
-        Worker1 -.->|Pull Images| ECR
-        Worker2 -.->|Pull Images| ECR
-        Jenkins -.->|Push Images| ECR
-        Jenkins -.->|Sync Assets| S3
+        Worker1 -.->|Push Images| ECR
+        Worker2 -.->|Push Images| ECR
+        Worker1 -.->|Apply Manifests| Bastion
+        Worker2 -.->|Apply Manifests| Bastion
+        Worker1 -.->|Sync Assets| S3
     end
 
     Control_Node =="SSH (Config via Ansible)"==> IGW
