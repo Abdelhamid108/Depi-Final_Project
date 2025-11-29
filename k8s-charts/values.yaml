@@ -24,4 +24,5 @@ monitoring:
     cred: "admin:$apr1$Nk5VHIhG$D3pBCwduB5c7RN.DNHHXl1"  
 
 ingress:
-  host: "amzona-depi-devops.kozow.com"
+  app_host: "amzona-depi-devops.kozow.com"
+  app_monitor: "monitor-amzona-depi-devops.kozow.com"  
