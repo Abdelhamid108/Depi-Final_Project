@@ -273,4 +273,3 @@ resource "aws_instance" "jenkins_master" {
     Name = "jenkins-control-plane"
   }
 }
-
