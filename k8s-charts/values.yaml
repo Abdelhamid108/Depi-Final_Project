@@ -22,3 +22,6 @@ config:
 monitoring:
   auth:
     cred: "admin:$apr1$Nk5VHIhG$D3pBCwduB5c7RN.DNHHXl1"  
+
+ingress:
+  hots: "depiamazona.ddnsgeek.com"

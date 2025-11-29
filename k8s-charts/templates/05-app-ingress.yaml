@@ -11,18 +11,15 @@ metadata:
     # Force the Redirect to HTTPS
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     # Basic Auth for Prometheus
-    nginx.ingress.kubernetes.io/auth-type: "basic"
-    nginx.ingress.kubernetes.io/auth-secret: "prometheus-basic-auth"
-    nginx.ingress.kubernetes.io/auth-realm: "Protected Metrics"
 
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - depiamazona.ddnsgeek.com  
+    - {{ .Values.ingress.host }}
     secretName: amazona-tls-secret
   rules:
-  - host: depiamazona.ddnsgeek.com 
+  - host: {{ .Values.ingress.host }}
     http:
       paths:
       - path: /?(api/.*)
@@ -39,22 +36,5 @@ spec:
             name: frontend-service
             port:
               number: 80
-  - host: monitoring.example.com
-    http:
-      paths:
-        - path: /prometheus/?(.*)
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: prometheus-service
-              port:
-                number: 9090
-        - path: /grafana/?(.*)
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: grafana-service
-              port:
-                number: 3000
       
 
