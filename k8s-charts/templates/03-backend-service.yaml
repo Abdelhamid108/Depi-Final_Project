@@ -1,12 +1,27 @@
+# -----------------------------------------------------------
+# Service: backend-service
+# Purpose: Exposes the backend application internally inside the cluster
+# Provides a stable DNS name for backend pods and load-balances traffic to them
+# -----------------------------------------------------------
+
 apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
   namespace: amazona
+
 spec:
+  # Select the pods that have the label "app=backend"
+  # This service will forward traffic only to those pods
   selector:
     app: backend
+
   ports:
-  - port: 5000
-    targetPort: 5000
+    # Port exposed inside the cluster
+    - port: 5000
+
+      # Port on the backend containers receiving traffic
+      targetPort: 5000
+
+  # ClusterIP = internal-only service, accessible only inside the cluster
   type: ClusterIP
