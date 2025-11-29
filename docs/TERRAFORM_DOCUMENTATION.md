@@ -23,6 +23,7 @@ This diagram shows the high-level interaction between the system's components.
 ---
 ![System Architecture](https://drive.google.com/uc?id=1ilIsiD7Yb4Qggry40tdlZogdov0vMF14)
 
+
 ## 2. Directory Hierarchy
 
 The following tree represents the exact structure of the `terraform/` directory.
