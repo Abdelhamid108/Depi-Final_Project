@@ -1,15 +1,14 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: amazona-monitoring-ingress
+  name: amazona-ingress-monitoring
   namespace: amazona
   annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
     # Link to the ClusterIssuer
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     # Force the Redirect to HTTPS
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    # Basic Auth for Prometheus
+    # Basic Auth for Prometheus & Grafana
     nginx.ingress.kubernetes.io/auth-type: "basic"
     nginx.ingress.kubernetes.io/auth-secret: "prometheus-basic-auth"
     nginx.ingress.kubernetes.io/auth-realm: "Protected Metrics"
@@ -18,23 +17,24 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - {{ .Values.ingress.host }}
-    secretName: amazona-tls-secret
+    - {{ .Values.ingress.app_monitor }}
+    secretName: monitoring-tls-secret
   rules:
-  - host: {{ .Values.ingress.host }}
+  - host: {{ .Values.ingress.app_monitor }}
     http:
       paths:
-        - path: /prometheus/?(.*)
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: prometheus-service
-              port:
-                number: 9090
-        - path: /grafana/?(.*)
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: grafana-service
-              port:
-                number: 3000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+
