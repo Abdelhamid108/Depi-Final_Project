@@ -5,6 +5,7 @@
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 ![Ansible](https://img.shields.io/badge/ansible-%23EE0000.svg?style=for-the-badge&logo=ansible&logoColor=white)
 ![Jenkins](https://img.shields.io/badge/jenkins-%232C5263.svg?style=for-the-badge&logo=jenkins&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
 ## 📖 Table of Contents
 1.  [Project Overview](#-project-overview)
@@ -236,11 +237,11 @@ We have identified several key areas for future development to further harden an
 
 This project was made possible by the hard work and collaboration of the following team members:
 
-*   **Abdelhameed Nael** - *DevOps Engineer / Cloud Architect*
-*   **Ahmed Osama** - *Infrastructure Specialist*
-*   **Mohamed Osama** - *CI/CD Pipeline Engineer*
-*   **Arwa Elsawy** - *Kubernetes Administrator*
-*   **Shimaa Mohamed** - *Monitoring & Security Engineer*
+*   **Abdelhameed Nael**  ([@Abdelhamid108](https://github.com/Abdelhamid108))
+*   **Ahmed Osama** ([@AhmedOsama-DvO](https://github.com/AhmedOsama-DvO))
+*   **Mohamed Osama** ([@mohamed0s](https://github.com/mohamed0s))
+*   **Arwa Elsawy** ([@Arwaelsawy](https://github.com/Arwaelsawy))
+*   **Shimaa Mohamed** ([@Shaimaa-mohamed99](https://github.com/Shaimaa-mohamed99))
 
 ---
 *© 2025 Depi Final Project. All Rights Reserved.*
