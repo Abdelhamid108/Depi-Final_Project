@@ -1,92 +1,84 @@
-# CI/CD Pipeline Documentation: Amazona Project
+# Jenkins Pipeline Guide: Amazona Project
 
-## 1. Architecture Overview
-
-The Amazona CI/CD pipeline implements a GitOps-driven workflow for building, testing, and deploying the Amazona microservices architecture to Kubernetes. It utilizes Jenkins for orchestration, AWS ECR for artifact storage, and Helm for release management.
-
-### Pipeline Stages
-1.  **Configuration Retrieval:** Dynamic injection of infrastructure parameters from AWS SSM.
-2.  **Change Detection:** Conditional logic to determine build scope based on git diffs.
-3.  **Artifact Construction:** Parallelized Docker builds for Frontend and Backend services.
-4.  **Deployment:** Atomic Helm upgrades to the target Kubernetes cluster.
+This guide explains how to operate the Amazona CI/CD pipeline. It breaks down **what** happens at each stage, **why** it is designed that way, and **how** you should interact with it.
 
 ---
 
-## 2. Configuration Specifications
+## 1. Prerequisites (What You Need)
 
-### 2.1 Environment Variables & Secrets
-The following credentials must be configured in the Jenkins Credentials Store.
+Before running the pipeline, ensure your environment is ready.
 
-| Credential ID | Type | Usage |
+### ✅ Jenkins Configuration
+You need these **Credentials** in Jenkins to access AWS and the Database:
+*   `aws-access-key` / `aws-secret-key`: For AWS access (ECR, SSM).
+*   `amazona-jwt-key`: For signing user tokens.
+*   `mongo_db_creds`: For database root access.
+
+### ✅ AWS Configuration (us-east-1)
+We use **SSM Parameter Store** to manage config outside of code. Ensure these exist:
+*   `/depi-project/amazona/frontend-ecr` (ECR URL)
+*   `/depi-project/amazona/backend-ecr` (ECR URL)
+*   `/depi-project/amazona/products-bucket` (S3 Bucket Name)
+
+---
+
+## 2. Pipeline Walkthrough (What & Why)
+
+### Stage 1: Fetch Configuration
+*   **What:** The pipeline asks AWS: "What is the current S3 bucket name? What is the ECR URL?"
+*   **Why:** **Decoupling.** If we change the bucket name in AWS, we don't want to edit the source code and redeploy. We just update the parameter in AWS.
+*   **How:** Uses `aws ssm get-parameter` to fetch values into environment variables.
+
+### Stage 2: Intelligent Build Analysis
+*   **What:** The pipeline checks `git diff` to see what changed since the last build.
+*   **Why:** **Speed.** If you only changed the `README.md`, we shouldn't wait 10 minutes to rebuild the Docker images.
+*   **How:**
+    *   If `frontend/` changed → Build Frontend.
+    *   If `backend/` changed → Build Backend.
+    *   If `k8s-charts/` changed → Deploy Manifests.
+
+### Stage 3: Build & Push Images
+*   **What:** Compiles your code into Docker images and uploads them to ECR.
+*   **Why:** **Efficiency.** We run Frontend and Backend builds **in parallel** (at the same time) to cut the wait time in half.
+*   **How:**
+    1.  Login to ECR.
+    2.  `docker build` with a unique tag (e.g., `v1.0-55`).
+    3.  `docker push` to the registry.
+
+### Stage 4: Deployment (Helm)
+*   **What:** Updates the Kubernetes cluster with the new images and configuration.
+*   **Why:** **Reliability.** We use **Helm** instead of simple text replacement (`envsubst`) because Helm is atomic. If the database update fails, Helm cancels the *entire* deployment, preventing a broken state.
+*   **How:**
+    *   **Injects Secrets:** Passes Jenkins credentials securely to the cluster.
+    *   **Updates Images:** Tells Kubernetes to pull the new tag (`v1.0-55`).
+    *   **Waits:** Pauses until all Pods are `Ready`.
+
+---
+
+## 3. Operator Guide (How to Run)
+
+### Standard Deployment
+Use this for normal code updates (features, bug fixes).
+1.  Go to the Jenkins Job.
+2.  Click **Build with Parameters**.
+3.  **Uncheck** `IsFirstRun`.
+4.  Click **Build**.
+    *   *Result:* It will only build what you changed.
+
+### Full System Reset / First Run
+Use this if you are setting up a new environment or things are out of sync.
+1.  Go to the Jenkins Job.
+2.  Click **Build with Parameters**.
+3.  **Check** `IsFirstRun`.
+4.  Click **Build**.
+    *   *Result:* It forces a rebuild of EVERYTHING and reapplies all Kubernetes manifests.
+
+---
+
+## 4. Troubleshooting (What if it fails?)
+
+| Error | Likely Cause | Solution |
 | :--- | :--- | :--- |
-| `aws-access-key` | Secret Text | AWS IAM Access Key for ECR/SSM access. |
-| `aws-secret-key` | Secret Text | AWS IAM Secret Key. |
-| `amazona-jwt-key` | Secret Text | JWT signing key injected into Backend pods. |
-| `mongo_db_creds` | Username/Password | Root authentication for MongoDB StatefulSet. |
-
-### 2.2 Infrastructure Parameters (AWS SSM)
-Configuration is decoupled from the pipeline code via AWS Systems Manager Parameter Store (`us-east-1`).
-
-| Parameter Path | Description |
-| :--- | :--- |
-| `/depi-project/amazona/frontend-ecr` | ECR Repository URI for Frontend. |
-| `/depi-project/amazona/backend-ecr` | ECR Repository URI for Backend. |
-| `/depi-project/amazona/products-bucket` | S3 Bucket name for product assets. |
-
----
-
-## 3. Build Logic & Versioning
-
-### 3.1 Conditional Execution
-To optimize resource utilization, the pipeline employs a differential build strategy:
-*   **Full Rebuild:** Triggered if `IsFirstRun` parameter is `true`.
-*   **Incremental Build:** Triggered if changes are detected in `frontend/` or `backend/` directories relative to `HEAD~1`.
-*   **Manifest Update:** Triggered if `k8s-charts/` is modified or if any image is rebuilt.
-
-### 3.2 Artifact Versioning
-Docker images are tagged using an immutable, sequential versioning scheme based on git commit depth:
-*   Format: `v1.0-<COMMIT_COUNT>`
-*   Example: `v1.0-55`
-This ensures strict traceability between the running artifact and the source code state.
-
----
-
-## 4. Deployment Strategy
-
-Deployment is managed via **Helm** to ensure atomicity and idempotency.
-
-### 4.1 Release Management
-*   **Release Name:** `amazona`
-*   **Namespace:** `amazona`
-*   **Chart Path:** `./k8s-charts`
-
-### 4.2 Dynamic Value Injection
-The pipeline overrides default chart values at runtime using the `--set` flag:
-*   `frontend.image`: Injected with the newly built ECR tag.
-*   `backend.image`: Injected with the newly built ECR tag.
-*   `secrets.*`: Injected from Jenkins Credentials.
-
-### 4.3 Pre-Deployment Operations
-1.  **Namespace Provisioning:** Idempotent creation of the `amazona` namespace.
-2.  **Secret Rotation:** Regeneration of the `regcred` Kubernetes Secret to handle AWS ECR token expiration (12-hour TTL).
-
----
-
-## 5. Operational Procedures
-
-### 5.1 Triggering a Deployment
-1.  Navigate to the Jenkins Job.
-2.  Select **Build with Parameters**.
-3.  Set `IsFirstRun` to `true` only for initial provisioning or disaster recovery.
-4.  Execute Build.
-
-### 5.2 Rollback Procedure
-In the event of a deployment failure, Helm allows for immediate rollback to the previous stable revision.
-Execute the following command on the control plane:
-```bash
-helm rollback amazona 0 -n amazona
-```
-
-### 5.3 Troubleshooting
-*   **ECR Authentication Failure:** Verify the IAM User associated with the Jenkins credentials has `AmazonEC2ContainerRegistryPowerUser` policy attached.
-*   **Pod Startup Timeout:** The pipeline utilizes `--wait`. If the build times out, inspect pod logs (`kubectl logs -l app=backend -n amazona`) for application-level errors.
+| **Push Failed (Retrying...)** | Missing Permissions | Check IAM User policies. Needs `AmazonEC2ContainerRegistryPowerUser`. |
+| **Helm Upgrade Failed** | Pod Crash | Run `kubectl get pods`. If a pod is `CrashLoopBackOff`, check its logs: `kubectl logs <pod-name>`. |
+| **Database Connection Error** | Wrong Credentials | Check `mongo_db_creds` in Jenkins. Ensure they match what the app expects. |
