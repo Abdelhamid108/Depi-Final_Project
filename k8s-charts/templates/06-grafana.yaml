@@ -1,20 +1,30 @@
-#Added the configmap that connect the prometheus to grafana 
+# -----------------------------------------------------------
+# Grafana & Prometheus Integration
+# Purpose: Configure Grafana to use Prometheus as a datasource
+#          and expose Grafana internally via a ClusterIP Service
+# -----------------------------------------------------------
+
+# Added the ConfigMap that connects Grafana to Prometheus
+# This ConfigMap provisions a Prometheus datasource in Grafana at startup
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasources
   namespace: amazona
 data:
+  # Datasource configuration file consumed by Grafana provisioning
   prometheus.yaml: |
     apiVersion: 1
     datasources:
-      - name: Prometheus
-        type: prometheus
-        url: http://prometheus-service.amazona.svc.cluster.local:9090/prometheus
-        access: proxy
-        isDefault: true
+      - name: Prometheus                # Display name for the datasource in Grafana
+        type: prometheus                # Datasource type
+        url: http://prometheus-service.amazona.svc.cluster.local:9090/prometheus  # Internal URL for Prometheus
+        access: proxy                   # Grafana proxies requests to Prometheus
+        isDefault: true                 # Set Prometheus as the default datasource
+
 ---
-#Setup for grafana deployment
+# Setup for Grafana Deployment
+# Deploys Grafana with the Prometheus datasource mounted from the ConfigMap
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,7 +33,7 @@ metadata:
   labels:
     app: grafana
 spec:
-  replicas: 1
+  replicas: 1                            # Single Grafana instance (can be scaled later if needed)
   selector:
     matchLabels:
       app: grafana
@@ -34,22 +44,23 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: grafana/grafana:10.0.0
+        image: grafana/grafana:10.0.0   # Grafana image version
         ports:
-        - containerPort: 3000
+        - containerPort: 3000           # Grafana HTTP UI port
         env:
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "admin"
+          value: "admin"                # Admin password (for demo only – should be a Secret in production)
         volumeMounts:
-        - name: grafana-datasources         
-          mountPath: /etc/grafana/provisioning/datasources
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources  # Path where Grafana reads datasource configs
       volumes:
       - name: grafana-datasources
         configMap:
-          name: grafana-datasources
+          name: grafana-datasources     # Reference to the ConfigMap defined above
 
 ---
-#The grafana service setup 
+# The Grafana Service setup
+# Exposes Grafana inside the cluster on port 3000 using a ClusterIP Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -57,10 +68,9 @@ metadata:
   namespace: amazona
 spec:
   selector:
-    app: grafana
+    app: grafana                        # Selects the Grafana pods by label
   ports:
   - name: grafana
-    port: 3000
-    targetPort: 3000
-  type: ClusterIP
-
+    port: 3000                          # Service port
+    targetPort: 3000                    # Pod/container port
+  type: ClusterIP                       # Internal-only access within the cluster

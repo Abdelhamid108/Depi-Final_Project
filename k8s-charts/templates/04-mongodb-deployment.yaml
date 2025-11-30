@@ -1,14 +1,30 @@
+# -----------------------------------------------------------
+# StatefulSet: mongodb
+# Purpose:
+#   Deploys MongoDB as a stateful workload with persistent storage.
+#   Ensures stable network identity, ordered startup/shutdown,
+#   and dedicated PersistentVolume per replica.
+# -----------------------------------------------------------
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongodb
   namespace: amazona
+
 spec:
+  # Headless Service name used to provide stable DNS for each pod
   serviceName: "mongodb"
+
+  # Number of MongoDB replicas (1 for a single-node setup)
   replicas: 1
+
+  # Ensures the StatefulSet manages only pods with this label
   selector:
     matchLabels:
       app: mongodb
+
+  # Pod template used to create each MongoDB replica
   template:
     metadata:
       labels:
@@ -16,28 +32,42 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: mongo:6
+        image: mongo:6   # Official MongoDB image
+
+        # MongoDB default port
         ports:
         - containerPort: 27017
+
+        # Mount persistent storage into the container
         volumeMounts:
         - name: data
-          mountPath: /data/db
+          mountPath: /data/db  # Default MongoDB data directory
+
         env:
+        # Inject MongoDB root credentials securely from Kubernetes Secret
         - name: MONGO_INITDB_ROOT_USERNAME
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
               key: mongo-root-username
+
         - name: MONGO_INITDB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               name: amazona-secrets
               key: mongo-root-password
+
+  # -----------------------------------------------------------
+  # Persistent Storage Template:
+  # Automatically creates a dedicated PersistentVolumeClaim
+  # named "data" for each pod (data-mongodb-0, data-mongodb-1...)
+  # Ensures each replica keeps its own stable storage.
+  # -----------------------------------------------------------
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: ["ReadWriteOnce"]
+      accessModes: ["ReadWriteOnce"]    # Node-local storage access
       resources:
         requests:
-          storage: 1Gi
+          storage: 1Gi                  # Requested persistent volume size
