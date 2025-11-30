@@ -237,11 +237,11 @@ We have identified several key areas for future development to further harden an
 
 This project was made possible by the hard work and collaboration of the following team members:
 
-*   **Abdelhameed Nael** 
-*   **Ahmed Osama** 
-*   **Mohamed Osama** 
-*   **Arwa Elsawy** 
-*   **Shimaa Mohamed** 
+*   **Abdelhameed Nael**  ([@Abdelhamid108](https://github.com/Abdelhamid108))
+*   **Ahmed Osama** ([@AhmedOsama-DvO](https://github.com/AhmedOsama-DvO))
+*   **Mohamed Osama** ([@mohamed0s](https://github.com/mohamed0s))
+*   **Arwa Elsawy** ([@Arwaelsawy](https://github.com/Arwaelsawy))
+*   **Shimaa Mohamed** ([@Shaimaa-mohamed99](https://github.com/Shaimaa-mohamed99))
 
 ---
 *© 2025 Depi Final Project. All Rights Reserved.*
