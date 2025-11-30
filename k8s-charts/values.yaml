@@ -1,3 +1,4 @@
+# values for helm charts 
 backend:
   image: "depi-app-backend:latest"
   replicas: 2
