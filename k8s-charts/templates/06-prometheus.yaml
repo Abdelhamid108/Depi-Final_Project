@@ -1,51 +1,81 @@
-#ConfigMap for Prometheus Configuration file
+# -----------------------------------------------------------
+# ConfigMap: prometheus-config
+# Purpose:
+#   - Stores the main Prometheus configuration file (prometheus.yml)
+#   - Defines global scrape intervals and scrape jobs
+#   - Enables Prometheus to discover and scrape metrics from pods
+# -----------------------------------------------------------
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: amazona
+  namespace: monitoring
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 15s
+      scrape_interval: 15s          # Default interval to scrape targets
 
     scrape_configs:
 
-    # Prometheus itself
+    # -------------------------------------------------------
+    # Job 1: Prometheus self-monitoring
+    # Scrapes metrics from Prometheus itself for internal monitoring
+    # -------------------------------------------------------
     - job_name: "prometheus"
       metrics_path: /prometheus/metrics
       static_configs:
       - targets: ["localhost:9090"]
 
-    # Pods in the amazona namespace
+    # -------------------------------------------------------
+    # Job 2: Kubernetes pods in "amazona" namespace
+    # Uses Kubernetes service discovery to find pods with
+    # Prometheus annotations (prometheus.io/scrape=true)
+    # -------------------------------------------------------
     - job_name: "kubernetes-pods"
       kubernetes_sd_configs:
       - role: pod
         namespaces:
           names: ["amazona"]
 
+      # Relabel rules:
+      # These rules convert pod annotations into Prometheus scrape settings
       relabel_configs:
+      # Only keep pods explicitly annotated for scraping
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
         action: keep
         regex: "true"
 
+      # Extract the port number from annotations
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
         action: replace
         target_label: address
         regex: (.+)
         replacement: $1
+      
+      # Filter: Only keep the target if the container port matches the annotation port
+      # This prevents scraping the main app port (e.g., 80, 27017) when we only want the exporter (e.g., 9113, 9216)
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_port_number]
+        action: keep
+        regex: (.+);\1    
 
+      # Extract custom metrics path from annotations
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
         target_label: metrics_path
         regex: (.+)
 
 ---
-#Prometheus Deployment
+# -----------------------------------------------------------
+# Deployment: Prometheus
+# Purpose:
+#   - Deploys Prometheus with the provided configuration
+#   - Mounts ConfigMap + emptyDir as storage for time-series data
+#   - Uses ServiceAccount defined earlier for RBAC permissions
+# -----------------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: amazona
+  namespace: monitoring
 spec:
   replicas: 1
   selector:
@@ -56,41 +86,46 @@ spec:
       labels:
         app: prometheus
     spec:
-      serviceAccountName: prometheus
+      serviceAccountName: prometheus    # Grants RBAC permissions
       containers:
       - name: prometheus
         image: prom/prometheus:v2.40.0
         args:
-          - "--config.file=/etc/prometheus/prometheus.yml"
-          - "--storage.tsdb.path=/prometheus"
-          - "--storage.tsdb.retention.time=200h"
-          - "--web.external-url=/prometheus/"
+          - "--config.file=/etc/prometheus/prometheus.yml"   # Load config from ConfigMap
+          - "--storage.tsdb.path=/prometheus"                # Directory for time-series data
+          - "--storage.tsdb.retention.time=200h"             # Retention period
+          - "--web.external-url=/prometheus/"                # Ensures correct URL prefix
         ports:
         - containerPort: 9090
-        volumeMounts:                   #Assigning the configmap to prometheus
-        - name: config                 
-          mountPath: /etc/prometheus
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus   # Mount ConfigMap here
         - name: data
-          mountPath: /prometheus
+          mountPath: /prometheus       # Ephemeral storage for metrics
       volumes:
       - name: config
         configMap:
-          name: prometheus-config
+          name: prometheus-config      # Connects ConfigMap to deployment
       - name: data
-        emptyDir: {}
+        emptyDir: {}                    # Non-persistent (ephemeral) storage
+
 ---
-#Prometheus Service as ClusterIP
+# -----------------------------------------------------------
+# Service: prometheus-service
+# Purpose:
+#   - Exposes Prometheus internally inside the cluster
+#   - Used by Ingress and Grafana to reach Prometheus
+# -----------------------------------------------------------
 apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-service
-  namespace: amazona
+  namespace: monitoring
 spec:
   selector:
     app: prometheus
   ports:
   - name: prometheus
-    port: 9090
-    targetPort: 9090
-  type: ClusterIP
-
+    port: 9090            # Service port inside the cluster
+    targetPort: 9090      # Container port
+  type: ClusterIP          # Internal-only service

@@ -1,3 +1,4 @@
+# values for helm charts 
 backend:
   image: "depi-app-backend:latest"
   replicas: 2
@@ -21,7 +22,7 @@ config:
 
 monitoring:
   auth:
-    cred: "admin:$apr1$Nk5VHIhG$D3pBCwduB5c7RN.DNHHXl1"  
+    cred: "admin:$apr1$4FpSqd7A$P0RpBoniNneG7.hIknnGb1"  
 
 ingress:
   app_host: "amzona-depi-devops.kozow.com"
