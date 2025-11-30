@@ -10,7 +10,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasources
-  namespace: amazona
+  namespace: monitoring
 data:
   # Datasource configuration file consumed by Grafana provisioning
   prometheus.yaml: |
@@ -18,7 +18,7 @@ data:
     datasources:
       - name: Prometheus                # Display name for the datasource in Grafana
         type: prometheus                # Datasource type
-        url: http://prometheus-service.amazona.svc.cluster.local:9090/prometheus  # Internal URL for Prometheus
+        url: http://prometheus-service.monitoring.svc.cluster.local:9090/prometheus  # Internal URL for Prometheus
         access: proxy                   # Grafana proxies requests to Prometheus
         isDefault: true                 # Set Prometheus as the default datasource
 
@@ -29,7 +29,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: amazona
+  namespace: monitoring
   labels:
     app: grafana
 spec:
@@ -65,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana-service
-  namespace: amazona
+  namespace: monitoring
 spec:
   selector:
     app: grafana                        # Selects the Grafana pods by label

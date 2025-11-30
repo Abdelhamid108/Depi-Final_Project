@@ -29,6 +29,12 @@ spec:
     metadata:
       labels:
         app: mongodb
+      annotations:
+        # Prometheus Scrape Annotations:
+        # Tells Prometheus to discover and scrape metrics from this pod
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9216"      # Port where metrics are exposed
+        prometheus.io/path: "/metrics"  # HTTP path for metrics
     spec:
       containers:
       - name: mongodb
@@ -57,6 +63,32 @@ spec:
               name: amazona-secrets
               key: mongo-root-password
 
+      # -------------------------------------------------------
+      # Sidecar Container: mongodb-exporter
+      # Purpose:
+      #   - Connects to the local MongoDB instance
+      #   - Extracts metrics and exposes them for Prometheus
+      # -------------------------------------------------------
+      - name: mongodb-exporter
+        image: percona/mongodb_exporter:0.40
+        args:
+        # Connect to MongoDB on localhost (since they share the same network namespace)
+        - --mongodb.uri=mongodb://$(MONGO_USER):$(MONGO_PASS)@127.0.0.1:27017/admin
+        env:
+        - name: MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-username
+        - name: MONGO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-password
+        ports:
+        - containerPort: 9216
+          name: metrics
+
   # -----------------------------------------------------------
   # Persistent Storage Template:
   # Automatically creates a dedicated PersistentVolumeClaim
@@ -71,3 +103,4 @@ spec:
       resources:
         requests:
           storage: 1Gi                  # Requested persistent volume size
+

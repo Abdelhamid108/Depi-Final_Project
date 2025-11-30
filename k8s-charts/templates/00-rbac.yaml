@@ -3,15 +3,20 @@
 #          for collecting metrics and monitoring the cluster
 
 #======================================================================
+# Create a isolated NameSpace for monitoring (promethues, grafana)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
 
-
+---
 # Create a dedicated ServiceAccount for Prometheus
 # This provides an identity for the Prometheus pods to authenticate with the API server
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus
-  namespace: amazona
+  namespace: monitoring
 
 ---
 # Define cluster-wide permissions for Prometheus
@@ -28,7 +33,7 @@ rules:
   - nodes/proxy
   - services
   - endpoints
-  - pods                       
+  - pods
   verbs: ["get", "list", "watch"]
 
 # Grant access to legacy Ingress API (for backward compatibility)
@@ -61,5 +66,5 @@ subjects:
 # Apply these permissions to the prometheus ServiceAccount
 - kind: ServiceAccount
   name: prometheus
-  namespace: amazona
+  namespace: monitoring
 

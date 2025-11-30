@@ -10,7 +10,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: amazona-ingress-monitoring
-  namespace: amazona
+  namespace: monitoring
   annotations:
     # Use the "letsencrypt-prod" ClusterIssuer to issue TLS certificates
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
