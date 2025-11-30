@@ -71,7 +71,7 @@ pipeline {
                         env.BUILD_BACKEND  = changes.contains('backend/') ? 'true' : 'false'
 
                         // Manifests are applied if the chart changed OR if images were rebuilt
-                        if (changes.contains('k8s-chart/') || env.BUILD_FRONTEND == 'true' || env.BUILD_BACKEND == 'true') {
+                        if (changes.contains('k8s-charts/') || env.BUILD_FRONTEND == 'true' || env.BUILD_BACKEND == 'true') {
                             env.APPLY_MANIFESTS = 'true'
                         } else {
                             env.APPLY_MANIFESTS = 'false'
