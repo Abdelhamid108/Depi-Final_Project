@@ -1,0 +1,31 @@
+---
+- name: 1. Run common Kubernetes setup on all nodes
+  hosts: k8s_cluster
+  gather_facts: no # Facts were already gathered in site.yml
+  roles:
+    # This role handles tasks common to ALL nodes (master and workers)
+    # e.g., disabling swap, installing kubelet, kubeadm, kubectl
+        - k8s_common_setup
+
+- name: 2. intiate the cluster on master node 
+  hosts: k8s_masters
+  gather_facts: no
+  roles:
+    # This role runs *only* on the master
+    # It runs 'kubeadm init' and generates the join token
+        - k8s_master_setup
+
+- name: 3. wokers join cluster 
+  hosts: k8s_workers
+  gather_facts: no
+  roles:
+    # This role runs *only* on the workers
+    # It uses the join token from the master to join the cluster
+    - k8s_worker_setup
+
+- name: 4. setup cluster to use aws services
+  hosts: k8s_masters
+  gather_facts: no
+  roles:
+    # This role runs *only* on the master
+    - aws_controllers   

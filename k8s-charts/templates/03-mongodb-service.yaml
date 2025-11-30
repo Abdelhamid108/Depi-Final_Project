@@ -1,0 +1,21 @@
+# -----------------------------------------------------------
+# Service: mongodb
+# Purpose: Exposes MongoDB internally within the cluster
+# -----------------------------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: amazona
+spec:
+  selector:
+    # Matches pods labeled with app: mongodb
+    # Ensures traffic is routed to the correct database pod
+    app: mongodb
+
+  ports:
+    - port: 27017        # Service port accessible inside the cluster
+      targetPort: 27017  # MongoDB container listening port
+
+  type: ClusterIP        # Internal cluster access only (default for databases)

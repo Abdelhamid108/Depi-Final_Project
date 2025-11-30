@@ -1,0 +1,196 @@
+---
+# Adds the Jenkins GPG key for Debian-based systems
+- name: add GPG key for jenkins
+  ansible.builtin.get_url:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    dest: /etc/apt/keyrings/jenkins-keyring.asc
+    mode: 'a+r'
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+# Adds the Jenkins apt repository
+- name: add jenkins repo
+  apt_repository:
+    repo: 'deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/'
+    state: present
+    filename: jenkins
+    update_cache: yes
+  when: ansible_distribution in ["Debian", "Ubuntu"]
+
+# Adds the Jenkins yum repository for RedHat-based systems
+- name: Add multiple repositories into the same file 
+  ansible.builtin.yum_repository:
+    name: Jenkins
+    description: Jenkins YUM repo
+    baseurl: "https://pkg.jenkins.io/redhat-stable/"
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: "https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key"
+  when: ansible_os_family == "RedHat"
+
+# Refreshes the package cache for RedHat
+- name: Clean and rebuild DNF/YUM metadata cache
+  ansible.builtin.dnf:
+    name: '*' 
+    state: latest 
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+  become: yes
+
+# Installs the Jenkins package
+- name: install jenkins engine
+  package:
+    name:
+      - jenkins
+    state: present
+    update_cache: yes
+  notify: start_enable_jenkins # Notifies handler to start/enable Jenkins
+
+# Adds the 'jenkins' user to the 'docker' group
+# This is CRITICAL for allowing Jenkins pipelines to run 'docker' commands
+- name: add jenkins user to docker group
+  user:
+    name: jenkins
+    groups: docker
+    state: present 
+    append: yes
+
+# This task forces all 'notify' handlers to run immediately.
+# We need Jenkins to be *running* for the next tasks to work.
+- name: Run jenkins handler now so jenkins intialization setup can proceed
+  ansible.builtin.meta: flush_handlers
+
+# Reads the initial admin password from the master node
+- name: read admin pwd
+  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: secretpwd # Saves the password into a variable named 'secretpwd'
+
+# This task runs a Groovy script on Jenkins to bypass the setup wizard
+# It creates the 'Jenkins' admin user with the password 'admin'
+- name: unlock and add admin user
+  jenkins_script:
+    script: |
+          import jenkins.model.*
+          import hudson.security.*
+          def instance = Jenkins.getInstance()
+          def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+          hudsonRealm.createAccount('Jenkins', '${user_pwd}')
+          instance.setSecurityRealm(hudsonRealm)
+          def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+          strategy.setAllowAnonymousRead(false)
+          instance.setAuthorizationStrategy(strategy)
+          instance.save()
+    args:
+      user_pwd: admin # This should be changed to use Ansible Vault
+    user: admin
+    password: "{{ secretpwd.stdout }}" # Authenticates using the initial password
+
+# Runs another Groovy script to mark the setup wizard as complete
+- name: complete setup wizard
+  jenkins_script:
+    script: |
+          import static jenkins.model.Jenkins.instance as jenkins
+          import jenkins.install.InstallState
+          if (!jenkins.installState.isSetupComplete()) {
+            InstallState.INITIAL_SETUP_COMPLETED.initializeState()
+          }
+    user: admin
+    password: "{{ secretpwd.stdout }}" # Authenticates using the new password
+
+# Installs all plugins listed in the 'jenkins_plugins' variable
+# (This variable is loaded from roles/jenkins_master_setup/vars/main.yml)
+- name: install plugin
+  jenkins_plugin:
+    name: "{{ item }}"
+    state: present
+    url_username: admin
+    url_password: "{{ secretpwd.stdout }}"
+  with_items: "{{ jenkins_plugins }}"
+  notify: restart_jenkins # Restarts Jenkins after plugins are installed
+
+- name: Restart Jenkins to load new plugins
+  ansible.builtin.meta: flush_handlers
+
+- name: Install python3-jenkins library (required for modules)
+  pip:
+    name: python-jenkins
+    state: present
+ 
+- name: Generate Jenkins API Token
+  community.general.jenkins_credential:
+    name: "ansible-token"
+    type: token
+    jenkins_user: Jenkins
+    jenkins_password: admin
+    url: http://localhost:8080
+      
+  register: jenkins_token_result
+
+- name: Copy SSH Key to Temp File
+  copy:
+    content: "{{ lookup('file', '~/.ssh/jenkins_key') }}"
+    dest: /tmp/jenkins_agent_key
+    mode: '0600'    
+
+- name: Create SSH Key Credential
+  community.general.jenkins_credential:
+    id: jenkins-ssh-key
+    type: ssh_key
+    username: jenkins
+    private_key_path: "/tmp/jenkins_agent_key"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+
+- name: Remove Temp SSH Key File
+  file:
+    path: "/tmp/jenkins_agent_key"
+    state: absent      
+
+- name: Create Aws access Key Credential
+  community.general.jenkins_credential:
+    id: aws-access-key
+    description: "credential for s3 bcuket access key"  
+    type: text
+    username: jenkins
+    secret: "{{ aws_access_key_id }}"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"      
+      
+- name: Create Aws secret access  Key Credential
+  community.general.jenkins_credential:
+    id: aws-secret-key
+    description: "credential for s3 bcuket access key"
+    type: text
+    username: jenkins
+    secret: "{{ aws_secret_access_key }}"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+
+- name: Add DATABASE user_and_pass credential
+  community.general.jenkins_credential:
+    id: "mongo_db_creds"
+    type: "user_and_pass"
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+    description: "DB User and password credential"
+    username: "{{ mongo_db_user }}"
+    password: "{{mongo_db_pass }}"
+
+- name: Create AWS JWT secret  KeY Credential
+  community.general.jenkins_credential:
+    id: amazona-jwt-key
+    description: "credential for JWT key"
+    type: text
+    username: jenkins
+    secret: "{{ amazona_jwt_secret }}"
+    state: present
+    url: http://localhost:8080
+    jenkins_user: Jenkins
+    token: "{{ jenkins_token_result.token }}"
+
+

@@ -1,0 +1,29 @@
+# values for helm charts 
+backend:
+  image: "depi-app-backend:latest"
+  replicas: 2
+  port: 5000
+
+frontend:
+  image: "depi-app-frontend:latest"
+  replicas: 2
+  port: 80
+
+secrets:
+  AWS_ACCESS_KEY: ""
+  AWS_SECRET_KEY: ""
+  JWT_TOKEN: ""
+  DB_USER: ""
+  DB_PASS: ""
+
+config:
+  bucketName: "default-bucket"
+  region: "us-east-1"
+
+monitoring:
+  auth:
+    cred: "admin:$apr1$4FpSqd7A$P0RpBoniNneG7.hIknnGb1"  
+
+ingress:
+  app_host: "amzona-depi-devops.kozow.com"
+  app_monitor: "monitor-amzona-depi-devops.kozow.com"  

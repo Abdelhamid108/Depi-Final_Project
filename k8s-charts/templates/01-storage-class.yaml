@@ -1,0 +1,22 @@
+# StorageClass definition for managing dynamic EBS volume provisioning on AWS
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+  annotations:
+    # Marks this StorageClass as the default for PersistentVolumeClaims
+    storageclass.kubernetes.io/is-default-class: "true"
+
+# AWS EBS CSI driver responsible for creating the underlying volumes
+provisioner: ebs.csi.aws.com
+
+# Delay volume binding until the pod is scheduled on a specific node
+# Ensures the EBS volume is created in the same availability zone as the node
+volumeBindingMode: WaitForFirstConsumer
+
+parameters:
+  # EBS volume type (gp3 offers faster baseline performance and lower cost)
+  type: gp3
+
+  # Enable encryption for all dynamically provisioned EBS volumes
+  encrypted: "true"

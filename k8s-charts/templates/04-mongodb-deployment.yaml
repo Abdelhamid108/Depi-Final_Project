@@ -1,0 +1,106 @@
+# -----------------------------------------------------------
+# StatefulSet: mongodb
+# Purpose:
+#   Deploys MongoDB as a stateful workload with persistent storage.
+#   Ensures stable network identity, ordered startup/shutdown,
+#   and dedicated PersistentVolume per replica.
+# -----------------------------------------------------------
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: amazona
+
+spec:
+  # Headless Service name used to provide stable DNS for each pod
+  serviceName: "mongodb"
+
+  # Number of MongoDB replicas (1 for a single-node setup)
+  replicas: 1
+
+  # Ensures the StatefulSet manages only pods with this label
+  selector:
+    matchLabels:
+      app: mongodb
+
+  # Pod template used to create each MongoDB replica
+  template:
+    metadata:
+      labels:
+        app: mongodb
+      annotations:
+        # Prometheus Scrape Annotations:
+        # Tells Prometheus to discover and scrape metrics from this pod
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9216"      # Port where metrics are exposed
+        prometheus.io/path: "/metrics"  # HTTP path for metrics
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:6   # Official MongoDB image
+
+        # MongoDB default port
+        ports:
+        - containerPort: 27017
+
+        # Mount persistent storage into the container
+        volumeMounts:
+        - name: data
+          mountPath: /data/db  # Default MongoDB data directory
+
+        env:
+        # Inject MongoDB root credentials securely from Kubernetes Secret
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-username
+
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-password
+
+      # -------------------------------------------------------
+      # Sidecar Container: mongodb-exporter
+      # Purpose:
+      #   - Connects to the local MongoDB instance
+      #   - Extracts metrics and exposes them for Prometheus
+      # -------------------------------------------------------
+      - name: mongodb-exporter
+        image: percona/mongodb_exporter:0.40
+        args:
+        # Connect to MongoDB on localhost (since they share the same network namespace)
+        - --mongodb.uri=mongodb://$(MONGO_USER):$(MONGO_PASS)@127.0.0.1:27017/admin
+        env:
+        - name: MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-username
+        - name: MONGO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-password
+        ports:
+        - containerPort: 9216
+          name: metrics
+
+  # -----------------------------------------------------------
+  # Persistent Storage Template:
+  # Automatically creates a dedicated PersistentVolumeClaim
+  # named "data" for each pod (data-mongodb-0, data-mongodb-1...)
+  # Ensures each replica keeps its own stable storage.
+  # -----------------------------------------------------------
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]    # Node-local storage access
+      resources:
+        requests:
+          storage: 1Gi                  # Requested persistent volume size
+

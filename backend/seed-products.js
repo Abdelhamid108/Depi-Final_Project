@@ -76,8 +76,8 @@ const sampleProducts = [
 
 const seedProducts = async () => {
   try {
-    // Connect to MongoDB using a local connection (for direct seeding)
-    const mongodbUrl = 'mongodb://admin:password@localhost:27017/amazona?authSource=admin';
+    // Connect to MongoDB using env var (Docker) or fallback to localhost (Host)
+    const mongodbUrl = process.env.MONGODB_URI || 'mongodb://admin:password@localhost:27017/amazona?authSource=admin';
     console.log('→ connecting to MongoDB at:', mongodbUrl);
     
     await mongoose.connect(mongodbUrl, {

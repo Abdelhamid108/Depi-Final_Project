@@ -1,0 +1,63 @@
+# -----------------------------------------------------------
+# Ingress: amazona-ingress
+# Purpose: Exposes frontend and backend services over HTTPS
+#          using NGINX Ingress and Let's Encrypt TLS certificates
+# -----------------------------------------------------------
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amazona-ingress
+  namespace: amazona
+  annotations:
+    # Enable regex-based path matching for routing rules
+    nginx.ingress.kubernetes.io/use-regex: "true"
+
+    # Rewrite incoming paths to match backend service expectations
+    # Example: /api/users --> /users on the backend
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+
+    # Use the specified ClusterIssuer (letsencrypt-prod) from cert-manager
+    # to automatically provision TLS certificates from Let's Encrypt
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Enforce HTTPS by redirecting all HTTP requests to HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # Basic Auth for Prometheus can be configured via additional annotations
+    # and secrets if needed (not enabled in this manifest)
+
+spec:
+  # Use NGINX as the ingress controller implementation
+  ingressClassName: nginx
+
+  # TLS configuration: bind certificate to the configured host
+  tls:
+  - hosts:
+    - {{ .Values.ingress.app_host }}
+    # Secret where cert-manager stores the generated TLS certificate
+    secretName: amazona-tls-secret
+
+  # HTTP routing rules based on hostname and path
+  rules:
+  - host: {{ .Values.ingress.app_host }}
+    http:
+      paths:
+      # Route API traffic to the backend service
+      # Matches paths starting with /api/ using regex
+      - path: /?(api/.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 5000
+
+      # Route all other traffic (root and frontend paths) to the frontend service
+      - path: /?(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80

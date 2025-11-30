@@ -1,0 +1,28 @@
+---
+# This command ensures the node is clean before joining
+# It's useful for re-running the playbook on a node that was already part of a cluster
+- name: 1. Reset worker node (if previously joined)
+  command: |
+     kubeadm reset -f \
+     --cri-socket=unix:///var/run/cri-dockerd.sock
+  ignore_errors: yes # Ignore errors if the node was never joined
+
+- name: Delete node from cluster
+  command: kubectl delete node {{ ansible_fqdn }}
+  delegate_to: master-node
+  become_user: k8s_manger
+  ignore_errors: yes # Ignore errors if the node was never joined  
+
+- name: restart kublet
+  service:
+    name: kubelet
+    state: restarted  
+
+- name: 2. Join worker to the cluster
+  # This is the magic: it reads the 'join_command' fact that was
+  # delegated to 'localhost' by the master setup play.
+  # This dynamically provides the token to the worker.
+  command: "{{ hostvars['localhost']['join_command'] }} --cri-socket=unix:///var/run/cri-dockerd.sock"
+  register: join_status
+  # Mark the task as 'changed' only if the output confirms a successful join
+  changed_when: "'This node has joined the cluster' in join_status.stdout"

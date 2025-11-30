@@ -1,0 +1,110 @@
+# -----------------------------------------------------------
+# Deployment: backend
+# Purpose: Runs the backend application and injects all required
+#          configuration (Secrets + ConfigMap + Prometheus annotations)
+# -----------------------------------------------------------
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: amazona  
+spec:
+  # Number of backend pod replicas (configured from values.yaml)
+  replicas: {{ .Values.backend.replicas }}
+
+  selector:
+    matchLabels:
+      app: backend
+
+  template:
+    metadata:
+      labels:
+        app: backend
+
+      annotations:
+        # Enable Prometheus scraping for backend metrics
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "5000"
+
+    spec:
+      # Use Docker registry credentials for pulling private images
+      imagePullSecrets:
+      - name: regcred
+
+      containers:
+      - name: backend
+        image: {{ .Values.backend.image }}
+
+        # Ex expose backend container port
+        ports:
+          - containerPort: 5000
+
+        env:
+        # -------------------------------------------------------
+        # AWS credentials (retrieved from amazona-secrets secret)
+        # -------------------------------------------------------
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: aws-access-key-id
+
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: aws-secret-access-key
+
+        # -------------------------------------------------------
+        # Application configuration (from amazona-config ConfigMap)
+        # -------------------------------------------------------
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config
+              key: aws-region
+
+        - name: AWS_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config
+              key: aws-bucket-name
+
+        - name: PAYPAL_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: amazona-config
+              key: paypal-client-id
+
+        # -------------------------------------------------------
+        # JWT secret for auth token signing/verification
+        # -------------------------------------------------------
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: jwt-secret
+
+        # -------------------------------------------------------
+        # MongoDB credentials (username + password)
+        # -------------------------------------------------------
+        - name: MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-username
+
+        - name: MONGO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: amazona-secrets
+              key: mongo-root-password
+
+        # -------------------------------------------------------
+        # Dynamic MongoDB connection URI constructed using
+        # injected username/password environment variables
+        # -------------------------------------------------------
+        - name: MONGODB_URL
+          value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongodb:27017/amazona?authSource=admin"

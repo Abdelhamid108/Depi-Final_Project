@@ -1,0 +1,20 @@
+# ClusterIssuer resource for cert-manager
+# Uses Let's Encrypt (ACME) to issue production TLS certificates for the cluster
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # ACME directory endpoint for Let's Encrypt production environment
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email used for ACME account registration and expiry notifications
+    email: abdelhameednael27@gmai.com
+    # Kubernetes secret where the ACME account private key will be stored
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          # Use NGINX Ingress controller for HTTP-01 challenge solving
+          class: nginx

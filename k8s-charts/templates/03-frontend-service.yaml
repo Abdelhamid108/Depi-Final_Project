@@ -1,0 +1,24 @@
+# -----------------------------------------------------------
+# Service: frontend-service
+# Purpose: Exposes the frontend application internally within
+#          the amazona namespace using a stable ClusterIP.
+# -----------------------------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: amazona
+
+spec:
+  # Select pods belonging to the frontend component
+  selector:
+    app: frontend
+
+  ports:
+    # Expose port 80 inside the cluster (HTTP traffic)
+    - port: 80
+      targetPort: 80  # Container's serving port
+
+  # Internal-only access (no external LoadBalancer or NodePort)
+  type: ClusterIP

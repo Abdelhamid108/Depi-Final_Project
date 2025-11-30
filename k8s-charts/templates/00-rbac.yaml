@@ -1,0 +1,70 @@
+# RBAC Configuration for Prometheus Monitoring
+# Purpose: Grant Prometheus read-only access to cluster resources
+#          for collecting metrics and monitoring the cluster
+
+#======================================================================
+# Create a isolated NameSpace for monitoring (promethues, grafana)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+
+---
+# Create a dedicated ServiceAccount for Prometheus
+# This provides an identity for the Prometheus pods to authenticate with the API server
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+
+---
+# Define cluster-wide permissions for Prometheus
+# This ClusterRole specifies what resources Prometheus can access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+# Grant access to core Kubernetes API resources
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+
+# Grant access to legacy Ingress API (for backward compatibility)
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+
+# Grant access to current Ingress API (Kubernetes 1.19+)
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+
+---
+# Bind the ServiceAccount to the ClusterRole
+#This activates the permissions defined above for the Prometheus ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+# Reference the ClusterRole created above
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+# Apply these permissions to the prometheus ServiceAccount
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+

@@ -1,0 +1,28 @@
+# -----------------------------------------------------------
+# ConfigMap: amazona-config
+# Purpose: Provides non-sensitive configuration values for the application
+# These values are injected into pods as environment variables or mounted files
+# -----------------------------------------------------------
+
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: amazona-config
+  namespace: amazona
+  labels:
+    app: amazona
+    component: configuration
+    managed-by: configuration-team
+
+data:
+  # AWS region used by application services
+  aws-region: {{ .Values.config.region }}
+
+  # Name of the S3 bucket used for file storage
+  aws-bucket-name: {{ .Values.config.bucketName }}
+
+  # PayPal client ID for sandbox environment (non-production)
+  paypal-client-id: "sb"
+
+  # API base path used by the frontend application to reach backend services
+  react-app-api-url: "/api"
