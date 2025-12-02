@@ -1,8 +1,10 @@
-# -----------------------------------------------------------
-# ConfigMap: amazona-config
-# Purpose: Provides non-sensitive configuration values for the application
-# These values are injected into pods as environment variables or mounted files
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: ConfigMap (Application Configuration)
+# -----------------------------------------------------------------------------
+# Provides non-sensitive configuration values for the 'amazona' application.
+# - Injected into Pods as environment variables.
+# - Contains: AWS Region, S3 Bucket Name, API URLs, etc.
+# -----------------------------------------------------------------------------
 
 apiVersion: v1
 kind: ConfigMap

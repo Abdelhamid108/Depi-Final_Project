@@ -1,3 +1,10 @@
+/**
+ * @file store.js
+ * @description Redux Store Configuration.
+ * Combines all reducers, applies middleware (Thunk), and initializes the store.
+ * Also handles persistence of Cart and User Info using Cookies.
+ */
+
 import { createStore, combineReducers, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import Cookie from 'js-cookie';
@@ -23,7 +30,10 @@ import {
   orderDeleteReducer,
 } from './reducers/orderReducers';
 
-// Updated to use Cookie.get() and JSON.parse for js-cookie v3
+// ----------------------------------------------------------------------------
+// Initial State & Persistence
+// ----------------------------------------------------------------------------
+// Load cart items and user info from cookies to persist state across reloads
 const cartItems = Cookie.get('cartItems') ? JSON.parse(Cookie.get('cartItems')) : [];
 const userInfo = Cookie.get('userInfo') ? JSON.parse(Cookie.get('userInfo')) : null;
 
@@ -34,6 +44,10 @@ const initialState = {
   cart: { cartItems: safeCartItems, shipping: {}, payment: {} },
   userSignin: { userInfo },
 };
+
+// ----------------------------------------------------------------------------
+// Reducer Combination
+// ----------------------------------------------------------------------------
 const reducer = combineReducers({
   productList: productListReducer,
   productDetails: productDetailsReducer,
@@ -51,10 +65,16 @@ const reducer = combineReducers({
   orderList: orderListReducer,
   orderDelete: orderDeleteReducer,
 });
+
+// ----------------------------------------------------------------------------
+// Store Creation
+// ----------------------------------------------------------------------------
 const composeEnhancer = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(
   reducer,
   initialState,
   composeEnhancer(applyMiddleware(thunk))
 );
+
 export default store;
+

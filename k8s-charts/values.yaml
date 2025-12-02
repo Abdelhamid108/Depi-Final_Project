@@ -1,14 +1,23 @@
-# values for helm charts 
+# -----------------------------------------------------------------------------
+# Helm Chart Values
+# -----------------------------------------------------------------------------
+# Default configuration values for the Amazona application.
+# These values can be overridden during 'helm install' or 'helm upgrade'.
+# -----------------------------------------------------------------------------
+
+# Backend Service Configuration
 backend:
   image: "depi-app-backend:latest"
   replicas: 2
   port: 5000
 
+# Frontend Service Configuration
 frontend:
   image: "depi-app-frontend:latest"
   replicas: 2
   port: 80
 
+# Secrets (To be populated via CI/CD or Secret Management)
 secrets:
   AWS_ACCESS_KEY: ""
   AWS_SECRET_KEY: ""
@@ -16,14 +25,19 @@ secrets:
   DB_USER: ""
   DB_PASS: ""
 
+# Application Configuration
 config:
   bucketName: "default-bucket"
   region: "us-east-1"
 
+# Monitoring Configuration (Prometheus/Grafana)
 monitoring:
   auth:
+    # Basic Auth credentials for Ingress (htpasswd format)
     cred: "admin:$apr1$4FpSqd7A$P0RpBoniNneG7.hIknnGb1"  
 
+# Ingress Configuration
 ingress:
   app_host: "amzona-depi-devops.kozow.com"
   app_monitor: "monitor-amzona-depi-devops.kozow.com"  
+

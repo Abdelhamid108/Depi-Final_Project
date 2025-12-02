@@ -1,3 +1,20 @@
+/*
+ * -----------------------------------------------------------------------------
+ *  JENKINS CI/CD PIPELINE
+ * -----------------------------------------------------------------------------
+ *  Project: Amazona E-Commerce
+ *  Description: 
+ *    This pipeline handles the continuous integration and deployment of the
+ *    Amazona application. It builds Docker images, pushes them to AWS ECR,
+ *    and deploys to Kubernetes using Helm.
+ *
+ *  Stages:
+ *    1. Fetch Configuration: Retrieves secrets and config from AWS SSM.
+ *    2. Check Changes: Analyzes git diff to determine which services to build.
+ *    3. Build & Push: Builds Docker images for changed services.
+ *    4. Deploy: Updates the Kubernetes cluster via Helm.
+ * -----------------------------------------------------------------------------
+ */
 pipeline {
     agent any
 

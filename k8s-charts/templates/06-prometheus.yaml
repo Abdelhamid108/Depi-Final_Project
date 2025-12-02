@@ -1,10 +1,14 @@
-# -----------------------------------------------------------
-# ConfigMap: prometheus-config
-# Purpose:
-#   - Stores the main Prometheus configuration file (prometheus.yml)
-#   - Defines global scrape intervals and scrape jobs
-#   - Enables Prometheus to discover and scrape metrics from pods
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Prometheus (Monitoring System)
+# -----------------------------------------------------------------------------
+# Deploys the Prometheus server for metrics collection.
+# - ConfigMap: Defines scrape jobs (self-monitoring, K8s pods).
+# - Deployment: Runs Prometheus with ephemeral storage (emptyDir).
+# - Service: Exposes Prometheus internally on port 9090.
+# -----------------------------------------------------------------------------
+
+# 1. ConfigMap: Prometheus Configuration
+# Defines global scrape intervals and scrape jobs
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -64,13 +68,8 @@ data:
         regex: (.+)
 
 ---
-# -----------------------------------------------------------
-# Deployment: Prometheus
-# Purpose:
-#   - Deploys Prometheus with the provided configuration
-#   - Mounts ConfigMap + emptyDir as storage for time-series data
-#   - Uses ServiceAccount defined earlier for RBAC permissions
-# -----------------------------------------------------------
+# 2. Deployment: Prometheus Server
+# Runs Prometheus with the provided configuration
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -110,12 +109,8 @@ spec:
         emptyDir: {}                    # Non-persistent (ephemeral) storage
 
 ---
-# -----------------------------------------------------------
-# Service: prometheus-service
-# Purpose:
-#   - Exposes Prometheus internally inside the cluster
-#   - Used by Ingress and Grafana to reach Prometheus
-# -----------------------------------------------------------
+# 3. Service: Prometheus Internal Access
+# Exposes Prometheus internally inside the cluster
 apiVersion: v1
 kind: Service
 metadata:

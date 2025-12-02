@@ -1,4 +1,12 @@
-# StorageClass definition for managing dynamic EBS volume provisioning on AWS
+# -----------------------------------------------------------------------------
+# Resource: StorageClass (EBS GP3)
+# -----------------------------------------------------------------------------
+# Defines how Persistent Volumes (PVs) are dynamically provisioned on AWS.
+# - Driver: ebs.csi.aws.com (AWS EBS CSI Driver)
+# - Type: gp3 (General Purpose SSD)
+# - Binding: WaitForFirstConsumer (Optimizes AZ placement)
+# -----------------------------------------------------------------------------
+
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:

@@ -1,8 +1,11 @@
-# -----------------------------------------------------------
-# Service: frontend-service
-# Purpose: Exposes the frontend application internally within
-#          the amazona namespace using a stable ClusterIP.
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Service (Frontend)
+# -----------------------------------------------------------------------------
+# Exposes the Frontend Deployment internally within the cluster.
+# - Type: ClusterIP (Internal access only)
+# - Port: 80 (Maps to container port 80)
+# - Selector: app=frontend
+# -----------------------------------------------------------------------------
 
 apiVersion: v1
 kind: Service

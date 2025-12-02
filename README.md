@@ -34,6 +34,22 @@ The application consists of a **React Frontend**, a **Node.js Backend**, and a *
 *   **Continuous Delivery**: Automated CI/CD pipelines using Jenkins and Helm.
 *   **Observability**: Integrated Monitoring stack with Prometheus and Grafana.
 
+### 📂 Project Structure
+
+```bash
+Depi-Final_Project/
+├── Ansible/                # Ansible playbooks and roles for configuration management
+├── backend/                # Node.js application source code
+├── docs/                   # Detailed documentation for each component
+├── frontend/               # React application source code
+├── k8s-charts/             # Helm charts for Kubernetes deployment
+├── Terraform/              # Terraform configuration for AWS infrastructure
+├── test-pipeline/          # Pipeline testing resources
+├── docker-compose.yaml     # Local development setup
+├── Jenkinsfile             # CI/CD pipeline definition
+└── README.md               # Master documentation
+```
+
 ---
 
 ## 🏗️ Architecture Deep Dive

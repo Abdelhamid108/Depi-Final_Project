@@ -1,3 +1,9 @@
+/**
+ * @file productRoute.js
+ * @description API Routes for Product Management.
+ * Handles CRUD operations for products, including image deletion from S3/Local storage.
+ */
+
 import express from 'express';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import fs from 'fs';
@@ -8,7 +14,9 @@ import config from '../config.js';
 
 const router = express.Router();
 
-// Configure AWS S3 (only if credentials are available)
+// ----------------------------------------------------------------------------
+// AWS S3 Configuration
+// ----------------------------------------------------------------------------
 const isS3Configured = config.accessKeyId && config.secretAccessKey && config.bucketName;
 let s3Client = null;
 
@@ -25,7 +33,15 @@ if (isS3Configured) {
   console.log('⚠️ S3 not configured. Using local file deletion only.');
 }
 
-// Helper function to extract S3 key from URL
+// ----------------------------------------------------------------------------
+// Helper Functions
+// ----------------------------------------------------------------------------
+
+/**
+ * Extracts the S3 object key from a full S3 URL.
+ * @param {string} imageUrl - The full URL of the image.
+ * @returns {string|null} The S3 key or null if extraction fails.
+ */
 const extractS3KeyFromUrl = (imageUrl) => {
   if (!imageUrl) return null;
 
@@ -53,7 +69,11 @@ const extractS3KeyFromUrl = (imageUrl) => {
   return null;
 };
 
-// Helper function to delete local image file
+/**
+ * Deletes an image file from local storage.
+ * @param {string} imageUrl - The relative path to the local image.
+ * @returns {Object} Result object { success, message }.
+ */
 const deleteLocalImage = async (imageUrl) => {
   if (!imageUrl) return { success: false, message: 'No image URL provided' };
 
@@ -61,7 +81,7 @@ const deleteLocalImage = async (imageUrl) => {
     // Check if this is a local file (starts with /uploads/)
     if (imageUrl.startsWith('/uploads/')) {
       const filePath = path.join(process.cwd(), imageUrl);
-      
+
       // Check if file exists
       if (fs.existsSync(filePath)) {
         await fs.promises.unlink(filePath);
@@ -71,7 +91,7 @@ const deleteLocalImage = async (imageUrl) => {
         return { success: false, message: 'Local image file not found' };
       }
     }
-    
+
     return { success: false, message: 'Not a local image URL' };
   } catch (error) {
     console.error('Error deleting local image:', error);
@@ -79,7 +99,11 @@ const deleteLocalImage = async (imageUrl) => {
   }
 };
 
-// Helper function to delete image from S3
+/**
+ * Deletes an image object from AWS S3.
+ * @param {string} imageUrl - The full S3 URL of the image.
+ * @returns {Object} Result object { success, message }.
+ */
 const deleteImageFromS3 = async (imageUrl) => {
   if (!imageUrl) return { success: false, message: 'No image URL provided' };
   if (!isS3Configured) return { success: false, message: 'S3 not configured' };
@@ -105,7 +129,11 @@ const deleteImageFromS3 = async (imageUrl) => {
   }
 };
 
-// Unified function to delete image (tries both S3 and local)
+/**
+ * Unified function to delete an image (tries both S3 and local).
+ * @param {string} imageUrl - The image URL or path.
+ * @returns {Object} Result object.
+ */
 const deleteImage = async (imageUrl) => {
   if (!imageUrl) return { success: false, message: 'No image URL provided' };
 
@@ -127,15 +155,24 @@ const deleteImage = async (imageUrl) => {
   return { success: false, message: 'Image URL format not recognized for deletion' };
 };
 
+// ----------------------------------------------------------------------------
+// Routes
+// ----------------------------------------------------------------------------
+
+/**
+ * @route   GET /api/products
+ * @desc    Get all products with filtering and sorting
+ * @access  Public
+ */
 router.get('/', async (req, res) => {
   const category = req.query.category ? { category: req.query.category } : {};
   const searchKeyword = req.query.searchKeyword
     ? {
-        name: {
-          $regex: req.query.searchKeyword,
-          $options: 'i',
-        },
-      }
+      name: {
+        $regex: req.query.searchKeyword,
+        $options: 'i',
+      },
+    }
     : {};
   const sortOrder = req.query.sortOrder
     ? req.query.sortOrder === 'lowest'
@@ -148,6 +185,11 @@ router.get('/', async (req, res) => {
   res.send(products);
 });
 
+/**
+ * @route   GET /api/products/:id
+ * @desc    Get single product details
+ * @access  Public
+ */
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findOne({ _id: req.params.id });
@@ -161,6 +203,12 @@ router.get('/:id', async (req, res) => {
     res.status(500).send({ message: 'Error fetching product details: ' + error.message });
   }
 });
+
+/**
+ * @route   POST /api/products/:id/reviews
+ * @desc    Add a review to a product
+ * @access  Private
+ */
 router.post('/:id/reviews', isAuth, async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (product) {
@@ -183,6 +231,12 @@ router.post('/:id/reviews', isAuth, async (req, res) => {
     res.status(404).send({ message: 'Product Not Found' });
   }
 });
+
+/**
+ * @route   PUT /api/products/:id
+ * @desc    Update a product (Admin only)
+ * @access  Private (Admin)
+ */
 router.put('/:id', isAuth, isAdmin, async (req, res) => {
   const productId = req.params.id;
   const product = await Product.findById(productId);
@@ -217,7 +271,11 @@ router.put('/:id', isAuth, isAdmin, async (req, res) => {
   return res.status(500).send({ message: ' Error in Updating Product.' });
 });
 
-// Updated delete route with unified image deletion (S3 + local)
+/**
+ * @route   DELETE /api/products/:id
+ * @desc    Delete a product and its image (Admin only)
+ * @access  Private (Admin)
+ */
 router.delete('/:id', isAuth, isAdmin, async (req, res) => {
   try {
     // First, find the product to get the image URL
@@ -260,6 +318,12 @@ router.delete('/:id', isAuth, isAdmin, async (req, res) => {
     res.status(500).send({ message: 'Error in Deletion: ' + error.message });
   }
 });
+
+/**
+ * @route   POST /api/products
+ * @desc    Create a new product (Admin only)
+ * @access  Private (Admin)
+ */
 router.post('/', isAuth, isAdmin, async (req, res) => {
   try {
     const product = new Product({
@@ -288,7 +352,11 @@ router.post('/', isAuth, isAdmin, async (req, res) => {
   }
 });
 
-// Test endpoint to verify S3 key extraction
+/**
+ * @route   POST /api/products/test-s3-key
+ * @desc    Test S3 key extraction logic (Admin only)
+ * @access  Private (Admin)
+ */
 router.post('/test-s3-key', isAuth, isAdmin, (req, res) => {
   const imageUrl = req.body.imageUrl;
   const s3Key = extractS3KeyFromUrl(imageUrl);
@@ -301,3 +369,4 @@ router.post('/test-s3-key', isAuth, isAdmin, (req, res) => {
 });
 
 export default router;
+

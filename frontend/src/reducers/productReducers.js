@@ -1,3 +1,9 @@
+/**
+ * @file productReducers.js
+ * @description Redux Reducers for Product State.
+ * Handles state updates for product listing, details, saving, deleting, and reviewing.
+ */
+
 import {
   PRODUCT_LIST_REQUEST,
   PRODUCT_LIST_SUCCESS,
@@ -17,6 +23,9 @@ import {
   PRODUCT_REVIEW_SAVE_RESET,
 } from '../constants/productConstants';
 
+/**
+ * Reducer for listing products.
+ */
 function productListReducer(state = { products: [] }, action) {
   switch (action.type) {
     case PRODUCT_LIST_REQUEST:
@@ -30,6 +39,9 @@ function productListReducer(state = { products: [] }, action) {
   }
 }
 
+/**
+ * Reducer for product details.
+ */
 function productDetailsReducer(state = { product: { reviews: [] } }, action) {
   switch (action.type) {
     case PRODUCT_DETAILS_REQUEST:
@@ -43,6 +55,9 @@ function productDetailsReducer(state = { product: { reviews: [] } }, action) {
   }
 }
 
+/**
+ * Reducer for deleting a product.
+ */
 function productDeleteReducer(state = { product: {} }, action) {
   switch (action.type) {
     case PRODUCT_DELETE_REQUEST:
@@ -56,6 +71,9 @@ function productDeleteReducer(state = { product: {} }, action) {
   }
 }
 
+/**
+ * Reducer for saving (creating/updating) a product.
+ */
 function productSaveReducer(state = { product: {} }, action) {
   switch (action.type) {
     case PRODUCT_SAVE_REQUEST:
@@ -68,6 +86,10 @@ function productSaveReducer(state = { product: {} }, action) {
       return state;
   }
 }
+
+/**
+ * Reducer for saving a product review.
+ */
 function productReviewSaveReducer(state = {}, action) {
   switch (action.type) {
     case PRODUCT_REVIEW_SAVE_REQUEST:
@@ -90,3 +112,4 @@ export {
   productDeleteReducer,
   productReviewSaveReducer,
 };
+

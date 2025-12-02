@@ -1,3 +1,9 @@
+/**
+ * @file productActions.js
+ * @description Redux Action Creators for Product Management.
+ * Handles async API calls for listing, saving, deleting, and reviewing products.
+ */
+
 import {
   PRODUCT_LIST_REQUEST,
   PRODUCT_LIST_SUCCESS,
@@ -17,6 +23,12 @@ import {
 } from '../constants/productConstants';
 import api from '../api';
 
+/**
+ * Fetches a list of products based on filters.
+ * @param {string} category - Product category filter.
+ * @param {string} searchKeyword - Search term.
+ * @param {string} sortOrder - Sort order (lowest, highest).
+ */
 const listProducts = (
   category = '',
   searchKeyword = '',
@@ -24,46 +36,50 @@ const listProducts = (
 ) => async (dispatch) => {
   try {
     dispatch({ type: PRODUCT_LIST_REQUEST });
-    
+
     const { data } = await api.get(
       `/api/products?category=${encodeURIComponent(category)}&searchKeyword=${encodeURIComponent(searchKeyword)}&sortOrder=${encodeURIComponent(sortOrder)}`
     );
-    
+
     dispatch({ type: PRODUCT_LIST_SUCCESS, payload: data });
   } catch (error) {
-    dispatch({ 
-      type: PRODUCT_LIST_FAIL, 
+    dispatch({
+      type: PRODUCT_LIST_FAIL,
       payload: error.response && error.response.data.message
         ? error.response.data.message
-        : error.message 
+        : error.message
     });
   }
 };
 
+/**
+ * Saves a product (Create or Update).
+ * @param {Object} product - Product data.
+ */
 const saveProduct = (product) => async (dispatch, getState) => {
   try {
     // Validate product data
     if (!product) {
       throw new Error('Product data is required');
     }
-    
+
     dispatch({ type: PRODUCT_SAVE_REQUEST, payload: product });
-    
+
     const {
       userSignin: { userInfo },
     } = getState();
-    
+
     if (!userInfo || !userInfo.token) {
       throw new Error('You must be logged in to perform this action');
     }
-    
+
     let data;
     const headers = {
       headers: {
         Authorization: 'Bearer ' + userInfo.token,
       },
     };
-    
+
     if (!product._id) {
       // Create new product
       const response = await api.post('/api/products', product, headers);
@@ -73,71 +89,84 @@ const saveProduct = (product) => async (dispatch, getState) => {
       const response = await api.put(`/api/products/${product._id}`, product, headers);
       data = response.data;
     }
-    
+
     dispatch({ type: PRODUCT_SAVE_SUCCESS, payload: data });
     return data;
   } catch (error) {
-    dispatch({ 
-      type: PRODUCT_SAVE_FAIL, 
+    dispatch({
+      type: PRODUCT_SAVE_FAIL,
       payload: error.response && error.response.data.message
         ? error.response.data.message
-        : error.message 
+        : error.message
     });
     throw error;
   }
 };
 
+/**
+ * Fetches details of a single product.
+ * @param {string} productId - ID of the product.
+ */
 const detailsProduct = (productId) => async (dispatch) => {
   try {
     dispatch({ type: PRODUCT_DETAILS_REQUEST, payload: productId });
-    
+
     // Validate product ID
     if (!productId) {
       throw new Error('Invalid product ID');
     }
-    
+
     const { data } = await api.get(`/api/products/${productId}`);
     dispatch({ type: PRODUCT_DETAILS_SUCCESS, payload: data });
   } catch (error) {
-    dispatch({ 
-      type: PRODUCT_DETAILS_FAIL, 
+    dispatch({
+      type: PRODUCT_DETAILS_FAIL,
       payload: error.response && error.response.data.message
         ? error.response.data.message
-        : error.message 
+        : error.message
     });
   }
 };
 
+/**
+ * Deletes a product.
+ * @param {string} productId - ID of the product to delete.
+ */
 const deleteProdcut = (productId) => async (dispatch, getState) => {
   try {
     const {
       userSignin: { userInfo },
     } = getState();
-    
+
     dispatch({ type: PRODUCT_DELETE_REQUEST, payload: productId });
-    
+
     // Validate product ID
     if (!productId) {
       throw new Error('Invalid product ID');
     }
-    
+
     const { data } = await api.delete(`/api/products/${productId}`, {
       headers: {
         Authorization: 'Bearer ' + userInfo.token,
       },
     });
-    
+
     dispatch({ type: PRODUCT_DELETE_SUCCESS, payload: data, success: true });
   } catch (error) {
-    dispatch({ 
-      type: PRODUCT_DELETE_FAIL, 
+    dispatch({
+      type: PRODUCT_DELETE_FAIL,
       payload: error.response && error.response.data.message
         ? error.response.data.message
-        : error.message 
+        : error.message
     });
   }
 };
 
+/**
+ * Saves a review for a product.
+ * @param {string} productId - ID of the product.
+ * @param {Object} review - Review data (rating, comment).
+ */
 const saveProductReview = (productId, review) => async (dispatch, getState) => {
   try {
     const {
@@ -145,7 +174,7 @@ const saveProductReview = (productId, review) => async (dispatch, getState) => {
         userInfo: { token },
       },
     } = getState();
-    
+
     // Validate inputs
     if (!productId) {
       throw new Error('Invalid product ID');
@@ -153,9 +182,9 @@ const saveProductReview = (productId, review) => async (dispatch, getState) => {
     if (!review) {
       throw new Error('Review data is required');
     }
-    
+
     dispatch({ type: PRODUCT_REVIEW_SAVE_REQUEST, payload: review });
-    
+
     const { data } = await api.post(
       `/api/products/${productId}/reviews`,
       review,
@@ -165,14 +194,14 @@ const saveProductReview = (productId, review) => async (dispatch, getState) => {
         },
       }
     );
-    
+
     dispatch({ type: PRODUCT_REVIEW_SAVE_SUCCESS, payload: data });
   } catch (error) {
-    dispatch({ 
-      type: PRODUCT_REVIEW_SAVE_FAIL, 
+    dispatch({
+      type: PRODUCT_REVIEW_SAVE_FAIL,
       payload: error.response && error.response.data.message
         ? error.response.data.message
-        : error.message 
+        : error.message
     });
   }
 };
@@ -184,3 +213,4 @@ export {
   deleteProdcut,
   saveProductReview,
 };
+

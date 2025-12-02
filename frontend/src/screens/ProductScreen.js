@@ -1,3 +1,9 @@
+/**
+ * @file ProductScreen.js
+ * @description Product Details Page.
+ * Displays detailed information about a product, allows adding to cart, and submitting reviews.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -6,17 +12,22 @@ import Rating from '../components/Rating';
 import { PRODUCT_REVIEW_SAVE_RESET } from '../constants/productConstants';
 
 function ProductScreen(props) {
+  // Local state for review form and cart quantity
   const [qty, setQty] = useState(1);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+
+  // Access Redux state
   const userSignin = useSelector((state) => state.userSignin);
   const { userInfo } = userSignin;
   const productDetails = useSelector((state) => state.productDetails);
   const { product, loading, error } = productDetails;
   const productReviewSave = useSelector((state) => state.productReviewSave);
   const { success: productSaveSuccess } = productReviewSave;
+
   const dispatch = useDispatch();
 
+  // Fetch product details and handle review submission success
   useEffect(() => {
     if (productSaveSuccess) {
       alert('Review submitted successfully.');
@@ -26,12 +37,13 @@ function ProductScreen(props) {
     }
     dispatch(detailsProduct(props.match.params.id));
     return () => {
-      //
+      // Cleanup
     };
   }, [productSaveSuccess]);
+
+  // Handle review submission
   const submitHandler = (e) => {
     e.preventDefault();
-    // dispatch actions
     dispatch(
       saveProductReview(props.match.params.id, {
         name: userInfo.name,
@@ -40,6 +52,8 @@ function ProductScreen(props) {
       })
     );
   };
+
+  // Handle add to cart navigation
   const handleAddToCart = () => {
     props.history.push('/cart/' + props.match.params.id + '?qty=' + qty);
   };
@@ -179,3 +193,4 @@ function ProductScreen(props) {
   );
 }
 export default ProductScreen;
+

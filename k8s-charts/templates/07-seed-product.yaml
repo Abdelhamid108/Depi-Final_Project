@@ -1,4 +1,12 @@
-#This job is done to apply a script that shows products in the website 
+# -----------------------------------------------------------------------------
+# Resource: Job (Seed Products)
+# -----------------------------------------------------------------------------
+# Runs a one-time script to populate the database with initial product data.
+# - Hook: post-install (Runs after Helm install)
+# - Cleanup: hook-succeeded (Deletes itself after success)
+# - Credentials: Uses Secrets to connect to MongoDB.
+# -----------------------------------------------------------------------------
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -21,7 +29,7 @@ spec:
       containers:
       - name: seed-products
         image: {{ .Values.backend.image }}
-        command: ["npm", "run", "seed"]  #This is command required to run the script   
+        command: ["npm", "run", "seed"]  # Command to run the seeding script
         env:
         # MongoDB credentials from Secret
         - name: MONGO_USER

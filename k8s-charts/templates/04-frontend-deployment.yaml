@@ -1,8 +1,11 @@
-# -----------------------------------------------------------
-# Deployment: frontend
-# Purpose: Runs the React frontend application inside the cluster
-# Integrates with AWS S3, backend API, and uses private registry images
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Deployment (Frontend)
+# -----------------------------------------------------------------------------
+# Deploys the React Frontend application.
+# - Replicas: Configurable via values.yaml.
+# - Sidecar: Nginx Prometheus Exporter for metrics.
+# - Config: Injects API URL via ConfigMap.
+# -----------------------------------------------------------------------------
 
 apiVersion: apps/v1
 kind: Deployment
@@ -52,10 +55,10 @@ spec:
 
       # -------------------------------------------------------
       # Sidecar Container: nginx-exporter
+      # -------------------------------------------------------
       # Purpose:
       #   - Connects to the local Nginx instance (stub_status)
       #   - Extracts metrics and exposes them for Prometheus
-      # -------------------------------------------------------
       - name: nginx-exporter
         image: nginx/nginx-prometheus-exporter:0.11
         args:

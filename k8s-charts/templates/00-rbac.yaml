@@ -1,16 +1,21 @@
-# RBAC Configuration for Prometheus Monitoring
-# Purpose: Grant Prometheus read-only access to cluster resources
-#          for collecting metrics and monitoring the cluster
+# -----------------------------------------------------------------------------
+# Resource: RBAC (Role-Based Access Control) for Prometheus
+# -----------------------------------------------------------------------------
+# Configures permissions for the Prometheus monitoring system.
+# - Namespace: Creates a dedicated 'monitoring' namespace.
+# - ServiceAccount: Identity for Prometheus pods.
+# - ClusterRole: Read-only permissions for cluster resources (Nodes, Pods, Services).
+# - ClusterRoleBinding: Binds the role to the ServiceAccount.
+# -----------------------------------------------------------------------------
 
-#======================================================================
-# Create a isolated NameSpace for monitoring (promethues, grafana)
+# 1. Create a isolated NameSpace for monitoring (Prometheus, Grafana)
 apiVersion: v1
 kind: Namespace
 metadata:
   name: monitoring
 
 ---
-# Create a dedicated ServiceAccount for Prometheus
+# 2. Create a dedicated ServiceAccount for Prometheus
 # This provides an identity for the Prometheus pods to authenticate with the API server
 apiVersion: v1
 kind: ServiceAccount
@@ -19,8 +24,8 @@ metadata:
   namespace: monitoring
 
 ---
-# Define cluster-wide permissions for Prometheus
-# This ClusterRole specifies what resources Prometheus can access
+# 3. Define cluster-wide permissions for Prometheus
+# This ClusterRole specifies what resources Prometheus can access (Read-Only)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -51,8 +56,8 @@ rules:
   verbs: ["get", "list", "watch"]
 
 ---
-# Bind the ServiceAccount to the ClusterRole
-#This activates the permissions defined above for the Prometheus ServiceAccount
+# 4. Bind the ServiceAccount to the ClusterRole
+# This activates the permissions defined above for the Prometheus ServiceAccount
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

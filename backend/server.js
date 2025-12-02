@@ -1,4 +1,13 @@
- import express from 'express';
+/**
+ * @file server.js
+ * @description Entry point for the Amazona Backend Application.
+ * This file configures the Express server, connects to MongoDB, sets up middleware,
+ * and defines the main API routes.
+ * 
+ * @module Server
+ */
+
+import express from 'express';
 import path from 'path';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
@@ -8,23 +17,32 @@ import userRoute from './routes/userRoute';
 import productRoute from './routes/productRoute';
 import orderRoute from './routes/orderRoute';
 import uploadRoute from './routes/uploadRoute';
-import client from 'prom-client'; // ← Prometheus client
+import client from 'prom-client'; // Prometheus client for metrics
 
-// ----------------- MongoDB Connection -----------------
+// ----------------------------------------------------------------------------
+// Database Connection
+// ----------------------------------------------------------------------------
 const mongodbUrl = config.MONGODB_URL;
-console.log('→ connecting to MongoDB at:', mongodbUrl);
+console.log('→ Connecting to MongoDB at:', mongodbUrl);
+
 mongoose
   .connect(mongodbUrl, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((error) => console.log('mongodb connection error:', error.message));
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch((error) => console.log('❌ MongoDB connection error:', error.message));
 
-// ----------------- Express App -----------------
+// ----------------------------------------------------------------------------
+// App Configuration
+// ----------------------------------------------------------------------------
 const app = express();
 
-// ----------------- CORS -----------------
+/**
+ * CORS Configuration
+ * Allows requests from any origin during development.
+ * In production, this should be restricted to specific domains.
+ */
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
@@ -34,13 +52,17 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
 };
+
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-// ----------------- Prometheus Metrics -----------------
+// ----------------------------------------------------------------------------
+// Monitoring & Observability (Prometheus)
+// ----------------------------------------------------------------------------
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
 
+// Define custom metric for HTTP requests
 const httpRequestsTotal = new client.Counter({
   name: 'backend_http_requests_total',
   help: 'Total number of HTTP requests',
@@ -48,7 +70,10 @@ const httpRequestsTotal = new client.Counter({
 });
 register.registerMetric(httpRequestsTotal);
 
-// Middleware to count all HTTP requests
+/**
+ * Middleware: Request Metrics
+ * Tracks every HTTP request and increments the Prometheus counter.
+ */
 app.use((req, res, next) => {
   res.on('finish', () => {
     httpRequestsTotal.inc({
@@ -60,19 +85,30 @@ app.use((req, res, next) => {
   next();
 });
 
-// Metrics endpoint for Prometheus
+/**
+ * Route: /metrics
+ * Exposes Prometheus metrics for scraping.
+ */
 app.get('/metrics', async (req, res) => {
   res.setHeader('Content-Type', register.contentType);
   res.send(await register.metrics());
 });
 
-// ----------------- Logging -----------------
+// ----------------------------------------------------------------------------
+// Logging Middleware
+// ----------------------------------------------------------------------------
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Host: ${req.get('host')}`);
   next();
 });
 
-// ----------------- Health & Test -----------------
+// ----------------------------------------------------------------------------
+// Health Checks & Diagnostics
+// ----------------------------------------------------------------------------
+/**
+ * Route: /api/health
+ * Returns the health status of the application.
+ */
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
@@ -95,17 +131,24 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// ----------------- Routes -----------------
+// ----------------------------------------------------------------------------
+// API Routes
+// ----------------------------------------------------------------------------
 app.use('/api/uploads', uploadRoute);
 app.use('/api/users', userRoute);
 app.use('/api/products', productRoute);
 app.use('/api/orders', orderRoute);
+
+// Expose PayPal Client ID to frontend
 app.get('/api/config/paypal', (req, res) => res.send(config.PAYPAL_CLIENT_ID));
 
+// Static file serving
 app.use('/uploads', express.static('uploads'));
 app.use(express.static(path.join(__dirname, '/../frontend/build')));
 
-// ----------------- Error Handling -----------------
+// ----------------------------------------------------------------------------
+// Error Handling
+// ----------------------------------------------------------------------------
 app.use((error, req, res, next) => {
   console.error('Error occurred:', error);
   res.status(error.status || 500).json({
@@ -114,20 +157,20 @@ app.use((error, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ message: 'API endpoint not found' });
-});
-
-// Frontend fallback
+// ----------------------------------------------------------------------------
+// Frontend Fallback (SPA Support)
+// ----------------------------------------------------------------------------
+// For any request not handled by the API, serve the React frontend.
 app.get('*', (req, res) => {
   res.sendFile(path.join(`${__dirname}/../frontend/build/index.html`));
 });
 
-// ----------------- Start Server -----------------
+// ----------------------------------------------------------------------------
+// Server Initialization
+// ----------------------------------------------------------------------------
 app.listen(config.PORT, () => {
-  console.log(`Server started at http://localhost:${config.PORT}`);
+  console.log(`🚀 Server started at http://localhost:${config.PORT}`);
 });
 
-// Export app for testing
 export default app;
+
