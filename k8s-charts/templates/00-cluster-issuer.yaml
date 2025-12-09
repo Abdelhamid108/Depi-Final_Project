@@ -14,7 +14,7 @@ metadata:
 spec:
   acme:
     # ACME directory endpoint for Let's Encrypt production environment
-    server: https://acme-v02.api.letsencrypt.org/directory
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
     
     # Email used for ACME account registration and expiry notifications
     email: abdelhameednael27@gmai.com

@@ -112,6 +112,13 @@
     user: admin
     password: "{{ secretpwd.stdout }}"
 
+
+# Check Jenkins instaleed plugins marker file exist
+- name: Check plugins marker file 
+  stat:
+    path: /tmp/installed_plugins
+  register: plugins_installed_marker
+
 # Install required plugins defined in 'jenkins_plugins' variable
 - name: install plugin
   jenkins_plugin:
@@ -120,7 +127,17 @@
     url_username: admin
     url_password: "{{ secretpwd.stdout }}"
   with_items: "{{ jenkins_plugins }}"
+  when: not plugins_installed_marker.stat.exists  
   notify: restart_jenkins
+
+#create a marker file for plugins installation process if its already done 
+- name:
+  file:
+    path: /tmp/installed_plugins
+    state: touch
+    owner: jenkins
+    group: jenkins
+  when: not plugins_installed_marker.stat.exists
 
 # Restart Jenkins to load plugins
 - name: Restart Jenkins to load new plugins

@@ -38,7 +38,7 @@
 # Install Helm (Kubernetes Package Manager)
 # Downloads the installation script and runs it
 - name: helm install
-  shell: "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash"
+  shell: "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
   args:
     creates: "/tmp/install-helm.txt" # Prevents re-running if this file exists (though script creates binary)
   register: helm_installation
