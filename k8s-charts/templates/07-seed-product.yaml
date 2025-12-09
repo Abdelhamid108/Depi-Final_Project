@@ -16,7 +16,7 @@ metadata:
     # LOGIC: Run ONLY after a fresh install. Ignore on upgrades.
     "helm.sh/hook": post-install
     # CLEANUP: Delete the job from Kubernetes after it finishes successfully
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   backoffLimit: 3       # Retry 3 times if it fails
   completions: 1        # Run successfully only once
