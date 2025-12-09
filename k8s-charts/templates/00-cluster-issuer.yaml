@@ -17,7 +17,7 @@ spec:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     
     # Email used for ACME account registration and expiry notifications
-    email: abdelhameednael27@gmai.com
+    email: abdelhameednael27@gmail.com
     
     # Kubernetes secret where the ACME account private key will be stored
     privateKeySecretRef:
