@@ -50,17 +50,13 @@ data:
         regex: "true"
 
       # Extract the port number from annotations
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
         action: replace
-        target_label: address
-        regex: (.+)
-        replacement: $1
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
       
-      # Filter: Only keep the target if the container port matches the annotation port
-      # This prevents scraping the main app port (e.g., 80, 27017) when we only want the exporter (e.g., 9113, 9216)
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_port_number]
-        action: keep
-        regex: (.+);\1    
+
 
       # Extract custom metrics path from annotations
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
@@ -124,3 +120,4 @@ spec:
     port: 9090            # Service port inside the cluster
     targetPort: 9090      # Container port
   type: ClusterIP          # Internal-only service
+
