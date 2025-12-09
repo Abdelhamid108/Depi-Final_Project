@@ -1,7 +1,7 @@
 apiVersion: v2
 name: amazona
-description: A Helm chart for Amazona E-commerce
+description: A Helm chart for Amazona E-commerce Application
+# This chart deploys the full stack: Backend, Frontend, MongoDB, and Monitoring (Prometheus/Grafana)
 type: application
 version: 0.1.0
-apVersion: "0.1.0"
-appVersion: "1.0.0"  
+appVersion: "1.0.0"

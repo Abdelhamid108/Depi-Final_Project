@@ -1,11 +1,24 @@
 ---
-# Checks if Docker is already installed by seeing if the 'docker' command exists
+# -----------------------------------------------------------------------------
+# Role: Docker Installation
+# -----------------------------------------------------------------------------
+# Installs and configures Docker CE on both Debian/Ubuntu and RedHat systems.
+# - Adds official Docker repositories
+# - Installs Docker Engine, CLI, and Compose plugin
+# - Configures the ansible user to run Docker commands without sudo
+# -----------------------------------------------------------------------------
+
+# Check if Docker is already installed to avoid unnecessary steps
 - name: check docker is installed
   command : which docker
   register: docker_check
-  ignore_errors: true # Don't fail if the command doesn't exist
+  ignore_errors: true
 
-# Installs dependencies needed to add a new apt repository
+# -----------------------------------------------------------------------------
+# Debian/Ubuntu Specific Tasks
+# -----------------------------------------------------------------------------
+
+# Install prerequisites for adding apt repositories
 - name: install docker dependincies
   apt:
     name:
@@ -15,10 +28,10 @@
     state: present
     update_cache: yes
   when:
-    - docker_check.failed # Only run if docker is not installed
-    - ansible_os_family == "Debian" # Only run on Debian/Ubuntu
+    - docker_check.failed
+    - ansible_os_family == "Debian"
 
-# Creates the standard directory for apt GPG keys
+# Create directory for storing GPG keys securely
 - name: Create directory for Docker GPG keyrings (Debian/Ubuntu)
   ansible.builtin.file:
     path: /etc/apt/keyrings
@@ -28,17 +41,17 @@
     - docker_check.rc != 0
     - ansible_os_family == "Debian"
 
-# Downloads Docker's official GPG key
-- name:  Download the Docker GPG key
+# Download Docker's official GPG key
+- name: Download the Docker GPG key
   ansible.builtin.get_url:
       url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
       dest: /etc/apt/keyrings/docker.asc
-      mode: 'a+r' # Make the key readable
+      mode: 'a+r'
   when:
     - docker_check.rc != 0
     - ansible_os_family == "Debian"
 
-# Adds the official Docker repository to apt sources
+# Add Docker repository to apt sources
 - name: Add the repository to Apt sources
   apt_repository:
     repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
@@ -49,9 +62,11 @@
     - docker_check.rc != 0
     - ansible_os_family == "Debian"
 
-# (Task 4 is a duplicate/redundant cache update, but harmless)
+# -----------------------------------------------------------------------------
+# RedHat/CentOS Specific Tasks
+# -----------------------------------------------------------------------------
 
-# Adds the Docker yum repository for RedHat-based systems
+# Add Docker repository for RedHat-based systems
 - name: add Docker repository
   ansible.builtin.yum_repository:
     name: docker-ce-stable
@@ -65,7 +80,7 @@
     - ansible_os_family == "RedHat"
     - docker_check.rc != 0
 
-# Refreshes the package cache for RedHat
+# Refresh package metadata cache
 - name: Clean and rebuild DNF/YUM metadata cache
   ansible.builtin.dnf:
     name: '*' 
@@ -74,7 +89,11 @@
   when: ansible_os_family == "RedHat"
   become: yes
 
-# Installs the Docker packages
+# -----------------------------------------------------------------------------
+# Common Installation Tasks
+# -----------------------------------------------------------------------------
+
+# Install Docker Engine and related plugins
 - name: install docker engine
   ansible.builtin.package:
     name:
@@ -84,12 +103,13 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
-  notify: start_enable_docker # Notifies the handler to start/enable Docker
+  notify: start_enable_docker
 
-# Adds the ansible_user (defined in all.yml) to the 'docker' group
-# This allows the user to run 'docker' commands without 'sudo'
+# Add the current ansible user to the 'docker' group
+# This allows running docker commands without 'sudo'
 - name: add ansible user for Docker group
   user:
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
+

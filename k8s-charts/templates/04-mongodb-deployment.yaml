@@ -1,10 +1,11 @@
-# -----------------------------------------------------------
-# StatefulSet: mongodb
-# Purpose:
-#   Deploys MongoDB as a stateful workload with persistent storage.
-#   Ensures stable network identity, ordered startup/shutdown,
-#   and dedicated PersistentVolume per replica.
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: StatefulSet (MongoDB)
+# -----------------------------------------------------------------------------
+# Deploys MongoDB as a stateful workload.
+# - Persistence: Uses VolumeClaimTemplates to provision EBS volumes.
+# - Sidecar: MongoDB Exporter for Prometheus metrics.
+# - Secrets: Injects credentials securely from 'amazona-secrets'.
+# -----------------------------------------------------------------------------
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -65,10 +66,10 @@ spec:
 
       # -------------------------------------------------------
       # Sidecar Container: mongodb-exporter
+      # -------------------------------------------------------
       # Purpose:
       #   - Connects to the local MongoDB instance
       #   - Extracts metrics and exposes them for Prometheus
-      # -------------------------------------------------------
       - name: mongodb-exporter
         image: percona/mongodb_exporter:0.40
         args:

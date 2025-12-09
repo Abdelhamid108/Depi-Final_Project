@@ -1,9 +1,19 @@
+/**
+ * @file userRoute.js
+ * @description API Routes for User Management (Authentication, Registration, Profile Updates).
+ */
+
 import express from 'express';
 import User from '../models/userModel';
 import { getToken, isAuth } from '../util';
 
 const router = express.Router();
 
+/**
+ * @route   PUT /api/users/:id
+ * @desc    Update user profile
+ * @access  Private (User)
+ */
 router.put('/:id', isAuth, async (req, res) => {
   const userId = req.params.id;
   const user = await User.findById(userId);
@@ -24,6 +34,11 @@ router.put('/:id', isAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/users/signin
+ * @desc    Authenticate user & get token
+ * @access  Public
+ */
 router.post('/signin', async (req, res) => {
   const signinUser = await User.findOne({
     email: req.body.email,
@@ -42,6 +57,11 @@ router.post('/signin', async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/users/register
+ * @desc    Register a new user
+ * @access  Public
+ */
 router.post('/register', async (req, res) => {
   const user = new User({
     name: req.body.name,
@@ -62,6 +82,11 @@ router.post('/register', async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/users/createadmin
+ * @desc    Seed an admin user (Development only)
+ * @access  Public
+ */
 router.get('/createadmin', async (req, res) => {
   try {
     const user = new User({
@@ -78,3 +103,4 @@ router.get('/createadmin', async (req, res) => {
 });
 
 export default router;
+

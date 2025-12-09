@@ -1,7 +1,11 @@
-# -----------------------------------------------------------
-# Service: mongodb
-# Purpose: Exposes MongoDB internally within the cluster
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Service (MongoDB)
+# -----------------------------------------------------------------------------
+# Exposes the MongoDB StatefulSet internally within the cluster.
+# - Type: ClusterIP (Internal access only)
+# - Port: 27017 (Standard MongoDB port)
+# - Selector: app=mongodb
+# -----------------------------------------------------------------------------
 
 apiVersion: v1
 kind: Service

@@ -1,3 +1,9 @@
+/**
+ * @file uploadRoute.js
+ * @description API Routes for File Uploads.
+ * Supports both local storage and AWS S3 uploads.
+ */
+
 import express from 'express';
 import multer from 'multer';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -6,7 +12,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
-// Configure AWS S3 Client (SDK v3)
+// ----------------------------------------------------------------------------
+// AWS S3 Configuration
+// ----------------------------------------------------------------------------
 const s3Config = {
   region: config.region,
 };
@@ -21,14 +29,18 @@ if (config.accessKeyId && config.secretAccessKey && config.accessKeyId !== 'dumm
 
 const s3Client = new S3Client(s3Config);
 
-// Memory storage for S3 uploads (temporary)
+// Memory storage for S3 uploads (temporary buffer)
 const memoryStorage = multer.memoryStorage();
 const uploadToMemory = multer({
   storage: memoryStorage,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// S3 upload route
+/**
+ * @route   POST /api/uploads/s3
+ * @desc    Upload image to AWS S3
+ * @access  Public (or Protected depending on usage)
+ */
 router.post('/s3', uploadToMemory.single('image'), async (req, res) => {
   try {
     console.log('S3 upload attempt started...');
@@ -66,7 +78,9 @@ router.post('/s3', uploadToMemory.single('image'), async (req, res) => {
   }
 });
 
-// Local storage configuration (fallback)
+// ----------------------------------------------------------------------------
+// Local Storage Configuration
+// ----------------------------------------------------------------------------
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     cb(null, 'uploads/');
@@ -78,7 +92,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Local upload route (fallback)
+/**
+ * @route   POST /api/uploads
+ * @desc    Upload image to local server storage
+ * @access  Public
+ */
 router.post('/', upload.single('image'), (req, res) => {
   try {
     if (!req.file) {

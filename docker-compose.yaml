@@ -1,51 +1,76 @@
+# -----------------------------------------------------------------------------
+# Docker Compose Configuration
+# -----------------------------------------------------------------------------
+# This file defines the local development environment for the Amazona project.
+# It orchestrates the Backend, Frontend, and MongoDB services.
+#
+# Usage:
+#   docker-compose up -d  : Start all services in the background
+#   docker-compose logs -f : View logs
+# -----------------------------------------------------------------------------
+
 services:
+  # ---------------------------------------------------------------------------
+  # Backend Service (Node.js)
+  # ---------------------------------------------------------------------------
   backend:
-    build: ./backend
-    container_name: backend
-    restart: always
+    build: ./backend              # Build from the backend directory
+    container_name: backend       # Fixed container name for easy reference
+    restart: always               # Auto-restart on crash or reboot
     depends_on:
       mongodb:
-        condition: service_healthy
-   
+        condition: service_healthy # Wait for DB to be ready before starting
     ports:
-      - "5000:5000"
+      - "5000:5000"               # Expose API on port 5000
     environment:
+      # Database Connection String
       - MONGODB_URI=mongodb://admin:password@mongodb:27017/amazona?authSource=admin
+      
+      # AWS Configuration (Dummy values for local dev, replace if using real AWS services locally)
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
       - AWS_REGION=${AWS_REGION:-eu-north-1}
       - AWS_BUCKET_NAME=${AWS_BUCKET_NAME:-amazona20}
+      
+      # Security & Payments
       - JWT_SECRET=${JWT_SECRET:-somethingsecret}
       - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-sb}
 
+  # ---------------------------------------------------------------------------
+  # Frontend Service (React)
+  # ---------------------------------------------------------------------------
   frontend:
-    build: ./frontend
+    build: ./frontend             # Build from the frontend directory
     container_name: frontend
     restart: always
     ports: 
-      - "3000:80"
+      - "3000:80"                 # Map host port 3000 to container port 80 (Nginx)
     environment:
-      - REACT_APP_API_URL=
+      - REACT_APP_API_URL=        # API URL (empty defaults to relative path in Nginx config)
 
+  # ---------------------------------------------------------------------------
+  # Database Service (MongoDB)
+  # ---------------------------------------------------------------------------
   mongodb:
-    image: mongo:6
+    image: mongo:6                # Use official MongoDB 6 image
     container_name: mongodb
     restart: always
     ports:
-      - "27017:27017"
-
+      - "27017:27017"             # Expose Mongo port (optional, for local tools like Compass)
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
-    
     volumes:
-      - mongodb_data:/data/db
-
+      - mongodb_data:/data/db     # Persist data to a named volume
     healthcheck:
       test: ["CMD", "mongosh", "--eval","db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
 volumes:
-  mongodb_data:
+  mongodb_data:                   # Named volume for MongoDB persistence
+

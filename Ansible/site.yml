@@ -1,14 +1,25 @@
 ---
-# This is a "setup" play that runs on all hosts.
- - name: setup agents
-   hosts: all
-   gather_facts: yes # Gathers facts about all hosts for later use
+# -----------------------------------------------------------------------------
+# Master Playbook: site.yml
+# -----------------------------------------------------------------------------
+# This playbook orchestrates the entire configuration management process.
+# It executes a sequence of specialized playbooks to provision the infrastructure:
+# 1. Initialization (Updates, Tools)
+# 2. Docker Installation
+# 3. Jenkins Agent Configuration
+# 4. Jenkins Master Setup
+# 5. Kubernetes Cluster Setup
+# -----------------------------------------------------------------------------
 
-# This section imports all the other playbooks in the correct order
-# This creates a modular and readable workflow.
+# Setup phase: Gathers facts from all hosts to be used in subsequent plays
+- name: Setup and Fact Gathering
+  hosts: all
+  gather_facts: yes
 
- -  import_playbook: ./playbooks/initialization.yml  # Runs first: updates cache, installs git/vim
- -  import_playbook: ./playbooks/docker_installation.yml # Runs second: installs Docker on all nodes
- -  import_playbook: ./playbooks/jenkins_agents_setup.yml # Runs third: prepares nodes to be Jenkins agents
- -  import_playbook: ./playbooks/jenkins_master_setup.yml # Runs forth: installs Jenkins on the master
- -  import_playbook: ./playbooks/k8s_cluster_setup.yml    # Runs last: builds the Kubernetes cluster
+# Import playbooks in the defined execution order
+- import_playbook: ./playbooks/initialization.yml     # Updates system cache, installs git, vim, etc.
+- import_playbook: ./playbooks/docker_installation.yml # Installs Docker runtime on all nodes.
+- import_playbook: ./playbooks/jenkins_agents_setup.yml # Configures nodes to act as Jenkins agents.
+- import_playbook: ./playbooks/jenkins_master_setup.yml # Deploys and configures the Jenkins master server.
+- import_playbook: ./playbooks/k8s_cluster_setup.yml    # Initializes the Kubernetes cluster (Master & Workers).
+

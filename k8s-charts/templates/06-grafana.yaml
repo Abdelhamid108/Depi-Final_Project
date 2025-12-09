@@ -1,11 +1,14 @@
-# -----------------------------------------------------------
-# Grafana & Prometheus Integration
-# Purpose: Configure Grafana to use Prometheus as a datasource
-#          and expose Grafana internally via a ClusterIP Service
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Grafana (Visualization)
+# -----------------------------------------------------------------------------
+# Deploys Grafana and configures it to use Prometheus as a data source.
+# - ConfigMap: Provisions the Prometheus datasource automatically.
+# - Deployment: Runs the Grafana instance.
+# - Service: Exposes Grafana internally on port 3000.
+# -----------------------------------------------------------------------------
 
-# Added the ConfigMap that connects Grafana to Prometheus
-# This ConfigMap provisions a Prometheus datasource in Grafana at startup
+# 1. ConfigMap: Datasource Provisioning
+# Automatically adds Prometheus as the default datasource in Grafana.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -23,7 +26,7 @@ data:
         isDefault: true                 # Set Prometheus as the default datasource
 
 ---
-# Setup for Grafana Deployment
+# 2. Deployment: Grafana Instance
 # Deploys Grafana with the Prometheus datasource mounted from the ConfigMap
 apiVersion: apps/v1
 kind: Deployment
@@ -59,7 +62,7 @@ spec:
           name: grafana-datasources     # Reference to the ConfigMap defined above
 
 ---
-# The Grafana Service setup
+# 3. Service: Grafana Internal Access
 # Exposes Grafana inside the cluster on port 3000 using a ClusterIP Service
 apiVersion: v1
 kind: Service

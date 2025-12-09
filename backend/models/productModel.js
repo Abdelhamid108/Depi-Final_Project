@@ -1,5 +1,13 @@
+/**
+ * @file productModel.js
+ * @description Mongoose schema definition for Products and Reviews.
+ */
+
 import mongoose from 'mongoose';
 
+/**
+ * Schema for Product Reviews
+ */
 const reviewSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -10,6 +18,10 @@ const reviewSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+/**
+ * Schema for Products
+ */
 const prodctSchema = new mongoose.Schema({
   name: { type: String, required: true },
   image: { type: String, required: true },
@@ -26,3 +38,4 @@ const prodctSchema = new mongoose.Schema({
 const productModel = mongoose.model('Product', prodctSchema);
 
 export default productModel;
+

@@ -1,10 +1,13 @@
-# -----------------------------------------------------------
-# Ingress: amazona-ingress-monitoring
-# Purpose:
-# - Exposes Prometheus and Grafana dashboards over HTTPS
-# - Protects access with HTTP Basic Authentication
-# - Uses cert-manager / Let's Encrypt for TLS certificates
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Ingress (Monitoring)
+# -----------------------------------------------------------------------------
+# Exposes Prometheus and Grafana dashboards securely.
+# - TLS: Uses Let's Encrypt production certificates via cert-manager.
+# - Auth: Enforces HTTP Basic Authentication for access control.
+# - Paths:
+#   - /prometheus -> Prometheus UI
+#   - /           -> Grafana UI
+# -----------------------------------------------------------------------------
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress

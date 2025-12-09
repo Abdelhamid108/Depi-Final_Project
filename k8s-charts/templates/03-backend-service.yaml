@@ -1,8 +1,11 @@
-# -----------------------------------------------------------
-# Service: backend-service
-# Purpose: Exposes the backend application internally inside the cluster
-# Provides a stable DNS name for backend pods and load-balances traffic to them
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Service (Backend)
+# -----------------------------------------------------------------------------
+# Exposes the Backend Deployment internally within the cluster.
+# - Type: ClusterIP (Internal access only)
+# - Port: 5000 (Maps to container port 5000)
+# - Selector: app=backend
+# -----------------------------------------------------------------------------
 
 apiVersion: v1
 kind: Service

@@ -1,3 +1,9 @@
+/**
+ * @file api.js
+ * @description Axios Instance Configuration.
+ * Sets up the base URL and global interceptors for handling requests and responses.
+ */
+
 import axios from 'axios';
 
 // Create an instance of axios with the base URL from environment variables
@@ -6,30 +12,32 @@ const api = axios.create({
   baseURL: apiUrl
 });
 
-// Add a request interceptor
+// ----------------------------------------------------------------------------
+// Interceptors
+// ----------------------------------------------------------------------------
+
+// Request Interceptor
 api.interceptors.request.use(
   function (config) {
-    // Do something before request is sent
+    // Do something before request is sent (e.g., attach tokens if not using cookies)
     return config;
   },
   function (error) {
-    // Do something with request error
     console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Add a response interceptor
+// Response Interceptor
 api.interceptors.response.use(
   function (response) {
-    // Any status code that lie within the range of 2xx
+    // Return response directly if successful (2xx status)
     return response;
   },
   function (error) {
-    // Any status codes that falls outside the range of 2xx
+    // Handle errors globally
     console.error('API Response Error:', error.response?.data?.message || error.message);
-    
-    // Handle specific error codes
+
     if (error.response) {
       if (error.response.status === 401) {
         console.log('Authentication error - you may need to sign in again');
@@ -39,9 +47,10 @@ api.interceptors.response.use(
     } else if (error.request) {
       console.log('Network error - please check your connection');
     }
-    
+
     return Promise.reject(error);
   }
 );
 
 export default api;
+

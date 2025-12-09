@@ -1,3 +1,9 @@
+/**
+ * @file orderModel.js
+ * @description Mongoose schema definition for Orders.
+ * Handles order items, shipping details, payment info, and order status.
+ */
+
 import mongoose from 'mongoose';
 const shippingSchema = {
   address: { type: String, required: true },

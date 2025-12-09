@@ -1,3 +1,9 @@
+/**
+ * @file orderRoute.js
+ * @description API Routes for Order Management.
+ * Handles creating, retrieving, deleting, and paying for orders.
+ */
+
 import express from 'express';
 import mongoose from 'mongoose';
 import Order from '../models/orderModel';
@@ -5,22 +11,38 @@ import { isAuth, isAdmin } from '../util';
 
 const router = express.Router();
 
+/**
+ * @route   GET /api/orders
+ * @desc    Get all orders (Admin only)
+ * @access  Private (Admin)
+ */
 router.get("/", isAuth, async (req, res) => {
   const orders = await Order.find({}).populate('user');
   res.send(orders);
 });
+
+/**
+ * @route   GET /api/orders/mine
+ * @desc    Get logged-in user's orders
+ * @access  Private
+ */
 router.get("/mine", isAuth, async (req, res) => {
   const orders = await Order.find({ user: req.user._id });
   res.send(orders);
 });
 
+/**
+ * @route   GET /api/orders/:id
+ * @desc    Get order by ID
+ * @access  Private
+ */
 router.get("/:id", isAuth, async (req, res) => {
   try {
     // Validate if the id is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).send("Invalid order ID format.");
     }
-    
+
     const order = await Order.findOne({ _id: req.params.id });
     if (order) {
       res.send(order);
@@ -33,13 +55,18 @@ router.get("/:id", isAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   DELETE /api/orders/:id
+ * @desc    Delete an order
+ * @access  Private (Admin)
+ */
 router.delete("/:id", isAuth, isAdmin, async (req, res) => {
   try {
     // Validate if the id is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).send("Invalid order ID format.");
     }
-    
+
     const order = await Order.findOne({ _id: req.params.id });
     if (order) {
       const deletedOrder = await order.remove();
@@ -53,6 +80,11 @@ router.delete("/:id", isAuth, isAdmin, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/orders
+ * @desc    Create a new order
+ * @access  Private
+ */
 router.post("/", isAuth, async (req, res) => {
   const newOrder = new Order({
     orderItems: req.body.orderItems,
@@ -68,6 +100,11 @@ router.post("/", isAuth, async (req, res) => {
   res.status(201).send({ message: "New Order Created", data: newOrderCreated });
 });
 
+/**
+ * @route   PUT /api/orders/:id/pay
+ * @desc    Update order to paid status
+ * @access  Private
+ */
 router.put("/:id/pay", isAuth, async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (order) {

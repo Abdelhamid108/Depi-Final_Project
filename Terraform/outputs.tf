@@ -1,16 +1,18 @@
-#
-# --- Root outputs.tf ---
-# This file declares outputs from the root module.
-# These values are printed after 'terraform apply' and can be queried.
+# -----------------------------------------------------------------------------
+# Terraform Outputs
+# -----------------------------------------------------------------------------
+# Defines values to be displayed after 'terraform apply'.
+# These outputs provide critical information like IP addresses and Repository URLs.
+# -----------------------------------------------------------------------------
 
 output "k8s_master_public_ip" {
   description = "Public IP address of the Kubernetes Master Node."
-  # Value is taken from the output of the 'compute' module
   value       = module.compute.k8s_master_public_ip
 }
+
 output "jenkins_master_public_ip" {
-  description = "public ip address of the jenkins control plane"
-  value = module.compute.jenkins_master_public_ip
+  description = "Public IP address of the Jenkins Server."
+  value       = module.compute.jenkins_master_public_ip
 }
 
 output "k8s_worker_private_ips" {
@@ -27,4 +29,5 @@ output "backend_ecr_repo_url" {
   description = "URL of the Backend ECR Repository."
   value       = module.ecr_repos.backend_repo_url
 }
+
 

@@ -1,3 +1,10 @@
+/**
+ * @file App.js
+ * @description Main Application Component.
+ * Handles client-side routing using React Router, manages the global layout (Header, Sidebar, Footer),
+ * and integrates Redux state for user authentication.
+ */
+
 import React from 'react';
 import { BrowserRouter, Route, Link } from 'react-router-dom';
 import './App.css';
@@ -16,18 +23,22 @@ import ProfileScreen from './screens/ProfileScreen';
 import OrdersScreen from './screens/OrdersScreen';
 
 function App() {
+  // Access user info from Redux state
   const userSignin = useSelector((state) => state.userSignin);
   const { userInfo } = userSignin;
 
+  // Sidebar toggle functions
   const openMenu = () => {
     document.querySelector('.sidebar').classList.add('open');
   };
   const closeMenu = () => {
     document.querySelector('.sidebar').classList.remove('open');
   };
+
   return (
     <BrowserRouter>
       <div className="grid-container">
+        {/* ---------------- Header ---------------- */}
         <header className="header">
           <div className="brand">
             <button onClick={openMenu}>&#9776;</button>
@@ -40,6 +51,7 @@ function App() {
             ) : (
               <Link to="/signin">Sign In</Link>
             )}
+            {/* Admin Menu */}
             {userInfo && userInfo.isAdmin && (
               <div className="dropdown">
                 <a href="#">Admin</a>
@@ -53,6 +65,8 @@ function App() {
             )}
           </div>
         </header>
+
+        {/* ---------------- Sidebar ---------------- */}
         <aside className="sidebar">
           <h3>Shopping Categories</h3>
           <button className="sidebar-close-button" onClick={closeMenu}>
@@ -68,6 +82,8 @@ function App() {
             </li>
           </ul>
         </aside>
+
+        {/* ---------------- Main Content ---------------- */}
         <main className="main">
           <div className="content">
             <Route path="/orders" component={OrdersScreen} />
@@ -85,6 +101,8 @@ function App() {
             <Route path="/" exact={true} component={HomeScreen} />
           </div>
         </main>
+
+        {/* ---------------- Footer ---------------- */}
         <footer className="footer">All right reserved.</footer>
       </div>
     </BrowserRouter>
@@ -92,4 +110,4 @@ function App() {
 }
 
 export default App;
-//test  / // 
+//test  / //

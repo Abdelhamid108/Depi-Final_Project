@@ -1,10 +1,14 @@
-# -----------------------------------------------------------
-# ConfigMap: prometheus-config
-# Purpose:
-#   - Stores the main Prometheus configuration file (prometheus.yml)
-#   - Defines global scrape intervals and scrape jobs
-#   - Enables Prometheus to discover and scrape metrics from pods
-# -----------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Resource: Prometheus (Monitoring System)
+# -----------------------------------------------------------------------------
+# Deploys the Prometheus server for metrics collection.
+# - ConfigMap: Defines scrape jobs (self-monitoring, K8s pods).
+# - Deployment: Runs Prometheus with ephemeral storage (emptyDir).
+# - Service: Exposes Prometheus internally on port 9090.
+# -----------------------------------------------------------------------------
+
+# 1. ConfigMap: Prometheus Configuration
+# Defines global scrape intervals and scrape jobs
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -46,17 +50,13 @@ data:
         regex: "true"
 
       # Extract the port number from annotations
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
         action: replace
-        target_label: address
-        regex: (.+)
-        replacement: $1
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
       
-      # Filter: Only keep the target if the container port matches the annotation port
-      # This prevents scraping the main app port (e.g., 80, 27017) when we only want the exporter (e.g., 9113, 9216)
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_port_number]
-        action: keep
-        regex: (.+);\1    
+
 
       # Extract custom metrics path from annotations
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
@@ -64,13 +64,8 @@ data:
         regex: (.+)
 
 ---
-# -----------------------------------------------------------
-# Deployment: Prometheus
-# Purpose:
-#   - Deploys Prometheus with the provided configuration
-#   - Mounts ConfigMap + emptyDir as storage for time-series data
-#   - Uses ServiceAccount defined earlier for RBAC permissions
-# -----------------------------------------------------------
+# 2. Deployment: Prometheus Server
+# Runs Prometheus with the provided configuration
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -110,12 +105,8 @@ spec:
         emptyDir: {}                    # Non-persistent (ephemeral) storage
 
 ---
-# -----------------------------------------------------------
-# Service: prometheus-service
-# Purpose:
-#   - Exposes Prometheus internally inside the cluster
-#   - Used by Ingress and Grafana to reach Prometheus
-# -----------------------------------------------------------
+# 3. Service: Prometheus Internal Access
+# Exposes Prometheus internally inside the cluster
 apiVersion: v1
 kind: Service
 metadata:
@@ -129,3 +120,4 @@ spec:
     port: 9090            # Service port inside the cluster
     targetPort: 9090      # Container port
   type: ClusterIP          # Internal-only service
+

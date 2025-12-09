@@ -1,3 +1,18 @@
+---
+# -----------------------------------------------------------------------------
+# Role: AWS Controllers Setup
+# -----------------------------------------------------------------------------
+# Deploys AWS-specific controllers and addons to the Kubernetes cluster.
+# - AWS Cloud Controller Manager (integrates K8s with AWS APIs)
+# - AWS Load Balancer Controller (manages ELB/ALB/NLB)
+# - AWS EBS CSI Driver (manages Elastic Block Store volumes)
+# - NGINX Ingress Controller (handles external access)
+# - Cert Manager (manages TLS certificates)
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# AWS Cloud Controller Manager
+# -----------------------------------------------------------------------------
 
 - name: Add Cloud Controller Manager Helm charts repositoy
   kubernetes.core.helm_repository:
@@ -9,13 +24,17 @@
     name: aws-cloud-controller-manager
     chart_ref: aws-cloud-controller-manager/aws-cloud-controller-manager
     release_namespace: kube-system
-    kubeconfig: /etc/kubernetes/admin.conf    # to give acces to setup the cluster intead of doing it as k8s user      
+    kubeconfig: /etc/kubernetes/admin.conf
     values:
       args:
         - "--configure-cloud-routes=false"
         - "--v=2"
         - "--cloud-provider=aws"  
         - "--cluster-name=kubernetes"
+
+# -----------------------------------------------------------------------------
+# AWS Load Balancer Controller
+# -----------------------------------------------------------------------------
 
 - name: Add  aws load balancer controller Helm charts repository
   kubernetes.core.helm_repository:
@@ -35,6 +54,10 @@
         name: aws-load-balancer-controller
       enableServiceMutatorWebhook: false
 
+# -----------------------------------------------------------------------------
+# AWS EBS CSI Driver
+# -----------------------------------------------------------------------------
+
 - name: Add aws ebs driver Helm charts repository
   kubernetes.core.helm_repository:
     name: aws-ebs-csi-driver
@@ -45,7 +68,11 @@
     name: aws-ebs-csi-driver
     chart_ref: aws-ebs-csi-driver/aws-ebs-csi-driver
     release_namespace: kube-system
-    kubeconfig: /etc/kubernetes/admin.conf    # to give acces to setup the cluster intead of doing it as k8s user
+    kubeconfig: /etc/kubernetes/admin.conf
+
+# -----------------------------------------------------------------------------
+# NGINX Ingress Controller
+# -----------------------------------------------------------------------------
 
 - name: Add NGINX Controller Helm charts repository
   kubernetes.core.helm_repository:
@@ -58,18 +85,21 @@
     chart_ref: ingress-nginx/ingress-nginx
     release_namespace: ingress-nginx
     create_namespace: yes
-    kubeconfig: /etc/kubernetes/admin.conf    # to give acces to setup the cluster intead of doing it as k8s user
+    kubeconfig: /etc/kubernetes/admin.conf
     values:
       controller:
         config:
           use-proxy-protocol: "true"
-       
         service:
           # This tells AWS to create a Classic Load Balancer (ELB) for us
           type: LoadBalancer
           annotations:
             service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
             service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+
+# -----------------------------------------------------------------------------
+# Cert Manager
+# -----------------------------------------------------------------------------
 
 - name: install cert manager
   command: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.1/cert-manager.yaml

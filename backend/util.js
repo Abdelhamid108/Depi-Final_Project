@@ -1,5 +1,16 @@
+/**
+ * @file util.js
+ * @description Utility functions for authentication and authorization.
+ */
+
 import jwt from 'jsonwebtoken';
 import config from './config';
+
+/**
+ * Generates a JSON Web Token (JWT) for a user.
+ * @param {Object} user - The user object containing _id, name, email, and isAdmin status.
+ * @returns {string} Signed JWT string valid for 48 hours.
+ */
 const getToken = (user) => {
   return jwt.sign(
     {
@@ -15,6 +26,14 @@ const getToken = (user) => {
   );
 };
 
+/**
+ * Middleware to authenticate users via JWT.
+ * Checks for the 'Authorization' header (Bearer token).
+ * If valid, attaches the decoded user to req.user.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express next middleware function.
+ */
 const isAuth = (req, res, next) => {
   const token = req.headers.authorization;
 
@@ -33,6 +52,13 @@ const isAuth = (req, res, next) => {
   }
 };
 
+/**
+ * Middleware to authorize Admin users.
+ * Must be used after isAuth middleware.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express next middleware function.
+ */
 const isAdmin = (req, res, next) => {
   console.log(req.user);
   if (req.user && req.user.isAdmin) {
@@ -42,3 +68,4 @@ const isAdmin = (req, res, next) => {
 };
 
 export { getToken, isAuth, isAdmin };
+

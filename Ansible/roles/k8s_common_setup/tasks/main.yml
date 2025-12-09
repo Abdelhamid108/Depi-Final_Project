@@ -1,16 +1,31 @@
 ---
-# Kubernetes cannot run if swap is enabled.
+# -----------------------------------------------------------------------------
+# Role: Kubernetes Common Setup
+# -----------------------------------------------------------------------------
+# Configures settings common to both Master and Worker nodes.
+# - Disables Swap (Required for Kubelet)
+# - Loads Kernel Modules (overlay, br_netfilter)
+# - Installs Container Runtime Interface (cri-dockerd)
+# - Installs Kubernetes Components (kubelet, kubeadm, kubectl)
+# - Configures Kubelet with AWS Cloud Provider
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# System Configuration
+# -----------------------------------------------------------------------------
+
+# Kubernetes requires swap to be disabled for performance and stability
 - name: Disable swap
   command: swapoff -a
 
-# This ensures swap stays off even after a reboot.
+# Ensure swap remains disabled after reboot by removing it from /etc/fstab
 - name: Keeps the swap off during reboot
   ansible.posix.mount:
     name: swap
     fstype: swap
     state: absent
     
-# This file tells the OS to load required kernel modules on boot.
+# Configure kernel modules required for container networking
 - name: Create the .conf file to load the modules at bootup
   copy:
     dest: /etc/modules-load.d/k8s.conf
@@ -18,7 +33,7 @@
         overlay
         br_netfilter
 
-# Loads the kernel modules immediately without a reboot.
+# Load kernel modules immediately
 - name: Load required kernel modules (overlay, br_netfilter)
   community.general.modprobe:
     name: "{{ item }}"
@@ -28,8 +43,12 @@
     - overlay
     - br_netfilter
 
-# This block installs 'cri-dockerd', the shim that allows
-# Kubernetes to use Docker as its container runtime.
+# -----------------------------------------------------------------------------
+# Container Runtime (cri-dockerd)
+# -----------------------------------------------------------------------------
+# Installs 'cri-dockerd', an adapter that allows Kubernetes to use Docker Engine
+# as its container runtime (since dockershim was removed in K8s 1.24+).
+
 - name: install cri-dockerd
   block:
     - name: 1.Download cri-dockerd archive
@@ -73,7 +92,7 @@
         - Reload systemd daemon
         - Start cri-docker socket
         
-    # This task was modified to be more robust (as we discussed)
+    # Update the ExecStart path in the service file to match our installation
     - name: 6. Replace executable path in service file
       replace:
         path: "/etc/systemd/system/cri-docker.service"
@@ -91,7 +110,11 @@
         - cri-docker.service
         - cri-docker.socket
           
-# This block installs the main Kubernetes components
+# -----------------------------------------------------------------------------
+# Kubernetes Components
+# -----------------------------------------------------------------------------
+# Installs kubelet (node agent), kubeadm (cluster bootstrapper), and kubectl (CLI).
+
 - name: Install kubelet, kubectl, and kubeadm
   block:
     # Adds the Kubernetes GPG key for Debian/Ubuntu
@@ -151,15 +174,21 @@
         - kubectl
       when: ansible_os_family == "Debian"
     
+# -----------------------------------------------------------------------------
+# Cloud Provider Configuration
+# -----------------------------------------------------------------------------
+
 - name: configure nodes to use aws services
   block: 
-    # get instnace provider id from aws metadata
+    # Retrieve the AWS Instance ID and Availability Zone from the metadata service
     - name: Fetch AWS Instance ID and AZ
       shell: |
         echo "aws:///$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)/$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
       register: aws_provider_id
       changed_when: false
       
+    # Configure Kubelet to use the external AWS Cloud Provider
+    # This allows K8s to integrate with AWS services (ELB, EBS, etc.)
     - name: Configure Kubelet with External Cloud Provider (The Robust Way)
       copy:
        #dest: /etc/default/kubelet
@@ -177,4 +206,5 @@
   service:
     name: kubelet
     state: restarted
+
 
